@@ -3,12 +3,14 @@ require 'rake'
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |s|
-    s.name = "ruby-rtf"
-    s.summary = %Q{TODO}
-    s.email = "thechrisoshow@gmail.com"
+    s.name = "rtf"
+    s.summary = 'Ruby library to create rich text format documents.'
+    s.email = "paw220470@yahoo.ie"
     s.homepage = "http://github.com/thechrisoshow/ruby-rtf"
-    s.description = "TODO"
-    s.authors = ["Chris O'Sullivan"]
+    s.description = 'Ruby RTF is a library that can be used to create '\
+                    'rich text format (RTF) documents. RTF is a text '\
+                    'based standard for laying out document content.'
+    s.authors = ["Peter Wood"]
   end
 rescue LoadError
   puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
@@ -39,13 +41,6 @@ begin
   end
 rescue LoadError
   puts "RCov is not available. In order to run rcov, you must: sudo gem install spicycode-rcov"
-end
-
-begin
-  require 'cucumber/rake/task'
-  Cucumber::Rake::Task.new(:features)
-rescue LoadError
-  puts "Cucumber is not available. In order to run features, you must: sudo gem install cucumber"
 end
 
 task :default => :test

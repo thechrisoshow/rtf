@@ -1,10 +1,13 @@
 require 'rubygems'
 require 'test/unit'
-require 'shoulda'
-require 'mocha'
 
 $LOAD_PATH.unshift(File.dirname(__FILE__))
-require 'ruby_rtf'
+require 'rtf'
+include RTF
 
 class Test::Unit::TestCase
+  
+  def fixture_file_path(filename)
+    File.join(File.dirname(__FILE__), "fixtures", filename)
+  end
 end
