@@ -11,6 +11,7 @@ begin
                     'rich text format (RTF) documents. RTF is a text '\
                     'based standard for laying out document content.'
     s.authors = ["Peter Wood"]
+    s.files = FileList["[A-Z]*", "{examples,lib,test}/**/*"]
   end
 rescue LoadError
   puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
@@ -21,7 +22,7 @@ Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_dir = 'rdoc'
   rdoc.title = 'ruby-rtf'
   rdoc.options << '--line-numbers' << '--inline-source'
-  rdoc.rdoc_files.include('README*')
+  rdoc.rdoc_files.include('[A-Z]*')
   rdoc.rdoc_files.include('lib/**/*.rb')
 end
 
