@@ -17,6 +17,10 @@ making the functionality within the library thread safe.
 In creating this library I set out to make it reasonably easy to create RTF
 documents in code. Having said that I'm certain that it is possible to generate
 invalid RTF documents with this library.
+=== This version
+
+Resolve problems on Ruby 1.9.1 with ImageNode#read_source. 
+Peter uses IO#getc, which returns a String on Ruby 1.9.1, not a Integer, so I replaced with getbyte.
 
 === Known Issues
 I've tried to assemble a reasonably extensive (although I won't claim

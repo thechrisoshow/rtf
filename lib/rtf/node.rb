@@ -1158,6 +1158,7 @@ module RTF
 
          # Check if the file is a JPEG.
          read_source(2)
+
          if @read[0,2] == [255, 216]
             type = JPEG
          else
@@ -1251,7 +1252,7 @@ module RTF
             done = false
 
             while done == false && @source.eof? == false
-               @read << @source.getc
+              @read << @source.getbyte
                done = yield @read[-1]
             end
          else
@@ -1259,7 +1260,8 @@ module RTF
                if size > 0
                   total = 0
                   while @source.eof? == false && total < size
-                     @read << @source.getc
+					  
+                     @read << @source.getbyte
                      total += 1
                   end
                end

@@ -5,12 +5,12 @@ begin
   Jeweler::Tasks.new do |s|
     s.name = "rtf"
     s.summary = 'Ruby library to create rich text format documents.'
-    s.email = "paw220470@yahoo.ie"
-    s.homepage = "http://github.com/thechrisoshow/ruby-rtf"
+    s.email = "clbustos@gmail.com"
+    s.homepage = "http://github.com/clbustos/rtf"
     s.description = 'Ruby RTF is a library that can be used to create '\
                     'rich text format (RTF) documents. RTF is a text '\
                     'based standard for laying out document content.'
-    s.authors = ["Peter Wood"]
+    s.authors = ["Peter Wood", "Claudio Bustos"]
   end
 rescue LoadError
   puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
