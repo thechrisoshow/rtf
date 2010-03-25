@@ -3,7 +3,8 @@ require 'rake'
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |s|
-    s.name = "rtf"
+    s.rubyforge_project = "ruby-statsample"
+    s.name = "clbustos-rtf"
     s.summary = 'Ruby library to create rich text format documents.'
     s.email = "clbustos@gmail.com"
     s.homepage = "http://github.com/clbustos/rtf"

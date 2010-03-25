@@ -750,7 +750,7 @@ module RTF
       attr_reader :width, :shading_colour, :style
 
       # Attribute mutator.
-      attr_writer :width, :style
+      attr_writer :width
 
       # This is the constructor for the TableCellNode class.
       #

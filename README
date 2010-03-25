@@ -17,10 +17,13 @@ making the functionality within the library thread safe.
 In creating this library I set out to make it reasonably easy to create RTF
 documents in code. Having said that I'm certain that it is possible to generate
 invalid RTF documents with this library.
+
 === This version
 
-Resolve problems on Ruby 1.9.1 with ImageNode#read_source. 
-Peter uses IO#getc, which returns a String on Ruby 1.9.1, not a Integer, so I replaced with getbyte.
+A bug fix fork of thechrisoshow/rtf[http://github.com/thechrisoshow/rtf] , which is a gitified version of original ruby-rft[http://rubyforge.org/projects/ruby-rtf/] 
+
+* Resolve problems on Ruby 1.9.1 with ImageNode#read_source. Peter uses IO#getc, which returns a String on Ruby 1.9.1, not a Integer, so I replaced with getbyte.
+* Deleted duplicated definition of ImageNode#style= with attr_writer and def.
 
 === Known Issues
 I've tried to assemble a reasonably extensive (although I won't claim
