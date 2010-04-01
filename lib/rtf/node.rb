@@ -63,11 +63,8 @@ module RTF
    # This class represents a specialisation of the Node class to refer to a Node
    # that simply contains text.
    class TextNode < Node
-      # Attribute accessor.
-      attr_reader :text
-
-      # Attribute mutator.
-      attr_writer :text
+     # Actual text
+      attr_accessor :text
 
       # This is the constructor for the TextNode class.
       #
@@ -131,11 +128,8 @@ module RTF
    class ContainerNode < Node
       include Enumerable
 
-      # Attribute accessor.
-      attr_reader :children
-
-      # Attribute mutator.
-      attr_writer :children
+      # Children elements of the node
+      attr_accessor :children
 
       # This is the constructor for the ContainerNode class.
       #
@@ -208,11 +202,14 @@ module RTF
    # is concrete enough to be used on its own but will also be used as the
    # base class for some specific command node types.
    class CommandNode < ContainerNode
-      # Attribute accessor.
-      attr_reader :prefix, :suffix, :split
-
-      # Attribute mutator.
-      attr_writer :prefix, :suffix, :split
+      # String containing the prefix text for the command
+      attr_accessor :prefix
+      # String containing the suffix text for the command
+      attr_accessor :suffix
+      # A boolean to indicate whether the prefix and suffix should
+      # be written to separate lines whether the node is converted
+      # to RTF. Defaults to true
+      attr_accessor :split
 
       # This is the constructor for the CommandNode class.
       #
@@ -522,12 +519,9 @@ module RTF
    # specialised container nodes that contain only TableRowNodes and have their
    # size specified when they are created an cannot be resized after that.
    class TableNode < ContainerNode
-      # Attribute accessor.
-      attr_reader :cell_margin
-
-      # Attribute mutator.
-      attr_writer :cell_margin
-
+      # Cell margin. Default to 100
+      attr_accessor :cell_margin
+      
       # This is a constructor for the TableNode class.
       #
       # ==== Parameters
@@ -536,12 +530,22 @@ module RTF
       # columns::  The number of columns in the table.
       # *widths::  One or more integers specifying the widths of the table
       #            columns.
-      def initialize(parent, rows, columns, *widths)
+      def initialize(parent, *args, &block)
+        if args.size>=2
+         rows=args.shift
+         columns=args.shift
+         widths=args
          super(parent) do
             entries = []
             rows.times {entries.push(TableRowNode.new(self, columns, *widths))}
             entries
          end
+        
+        elsif block
+          block.arity<1 ? self.instance_eval(&block) : block.call(self)
+        else
+          raise "You should use 0 or >2 args"
+        end
          @cell_margin = 100
       end
 
@@ -669,7 +673,7 @@ module RTF
          end
       end
 
-      # Attrobute accessors
+      # Attribute accessors
       def length
          entries.size
       end
@@ -745,13 +749,11 @@ module RTF
    class TableCellNode < CommandNode
       # A definition for the default width for the cell.
       DEFAULT_WIDTH                              = 300
-
+      # Width of cell
+      attr_accessor :width
       # Attribute accessor.
-      attr_reader :width, :shading_colour, :style
-
-      # Attribute mutator.
-      attr_writer :width
-
+      attr_reader :shading_colour, :style
+      
       # This is the constructor for the TableCellNode class.
       #
       # ==== Parameters
