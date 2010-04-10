@@ -1,3 +1,5 @@
+$:.unshift(File.dirname(__FILE__)+"/../lib")
+
 require 'test_helper'
 
 # Colour class unit test class.
@@ -5,7 +7,6 @@ class ImageNodeTest < Test::Unit::TestCase
    def setup
       @document = Document.new(Font.new(Font::ROMAN, 'Arial'))
    end
-
    def test_basics
       image = ImageNode.new(@document, fixture_file_path("bitmap1.bmp"), 1)
 

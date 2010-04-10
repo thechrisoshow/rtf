@@ -3,10 +3,11 @@ require 'rake'
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |s|
-    s.name = "rtf"
+    s.rubyforge_project = "ruby-statsample"
+    s.name = "clbustos-rtf"
     s.summary = 'Ruby library to create rich text format documents.'
-    s.email = "paw220470@yahoo.ie"
-    s.homepage = "http://github.com/thechrisoshow/ruby-rtf"
+    s.email = "clbustos@gmail.com"
+    s.homepage = "http://github.com/clbustos/rtf"
     s.description = 'Ruby RTF is a library that can be used to create '\
                     'rich text format (RTF) documents. RTF is a text '\
                     'based standard for laying out document content.'
@@ -14,7 +15,7 @@ begin
     s.files = FileList["[A-Z]*", "{examples,lib,test}/**/*"]
   end
 rescue LoadError
-  puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
+  puts "Jeweler not available. Install it with: sudo gem install jeweler"
 end
 
 require 'rake/rdoctask'
