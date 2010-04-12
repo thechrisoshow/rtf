@@ -1,4 +1,4 @@
-== Ruby Rich Text Format (RTF) Library 0.2.0
+== Ruby Rich Text Format (RTF) Library
 The RTF library provides a pure Ruby set of functionality that can be used to
 programmatically create RTF documents. The main aim in developing this library
 is to ease the complexity involved in assembling RTF documents although some
@@ -17,13 +17,6 @@ making the functionality within the library thread safe.
 In creating this library I set out to make it reasonably easy to create RTF
 documents in code. Having said that I'm certain that it is possible to generate
 invalid RTF documents with this library.
-
-=== This version
-
-A bug fix fork of thechrisoshow/rtf[http://github.com/thechrisoshow/rtf] , which is a gitified version of original ruby-rft[http://rubyforge.org/projects/ruby-rtf/] 
-
-* Resolve problems on Ruby 1.9.1 with ImageNode#read_source. Peter uses IO#getc, which returns a String on Ruby 1.9.1, not a Integer, so I replaced with getbyte.
-* Deleted duplicated definition of ImageNode#style= with attr_writer and def.
 
 === Known Issues
 I've tried to assemble a reasonably extensive (although I won't claim
@@ -183,7 +176,11 @@ is installed with the library gem (if you're reading this you may already be
 looking at this documentation). Another source of information is the examples
 directory, so check that out too.
 
+CONTRIBUTORS
+Claudio Bustos
+Chris O'Sullivan
+
 COPYRIGHT
 =========
 
-Copyright (c) 2009 Peter Wood. See LICENSE for details.
+Copyright (c) 2009-2010 Peter Wood. See LICENSE for details.
