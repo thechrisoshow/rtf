@@ -6,14 +6,10 @@ module RTF
    # This class represents an element within an RTF document. The class provides
    # a base class for more specific node types.
    class Node
-      # Attribute accessor.
-      attr_reader :parent
-
-      # Attribute mutator.
-      attr_writer :parent
-
-
-      # This is the constructor for the Node class.
+      # Node parent.
+      attr_accessor :parent
+      
+      # Constructor for the Node class.
       #
       # ==== Parameters
       # parent::  A reference to the Node that owns the new Node. May be nil
@@ -118,7 +114,13 @@ module RTF
       # This method generates the RTF equivalent for a TextNode object. This
       # method escapes any special sequences that appear in the text.
       def to_rtf
-         @text == nil ? '' : @text.gsub("{", "\\{").gsub("}", "\\}").gsub("\\", "\\\\")
+        rtf=(@text == nil ? '' : @text.gsub("{", "\\{").gsub("}", "\\}").gsub("\\", "\\\\"))
+        # Encode as Unicode.
+        if RUBY_VERSION>"1.9.0"
+          rtf.encode("UTF-16LE").each_codepoint.map {|cp|
+            cp < 128 ? cp.chr : "\\u#{cp}\\'3f"
+          }.join("")
+        end
       end
    end # End of the TextNode class.
 
