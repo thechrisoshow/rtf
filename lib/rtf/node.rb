@@ -394,6 +394,21 @@ module RTF
          end
       end
 
+      # This method provides a short cut means of creating a subscript command
+      # node. The method accepts a block that will be passed a single parameter
+      # which will be a reference to the subscript node created. After the
+      # block is complete the subscript node is appended to the end of the
+      # child nodes on the object that the method is call against.
+      def subscript
+         style           = CharacterStyle.new
+         style.subscript = true
+         if block_given?
+            apply(style) {|node| yield node}
+         else
+            apply(style)
+         end
+      end
+
       # This method provides a short cut means of creating a superscript command
       # node. The method accepts a block that will be passed a single parameter
       # which will be a reference to the superscript node created. After the
