@@ -1,5 +1,8 @@
 == CHANGES
 
+0.3.1
+  * Added the #subscript helper to the CommandNode class [vjt]
+
 0.3.0
   * Resolve problems on Ruby 1.9.1 with ImageNode#read_source. Peter uses IO#getc, which returns a String on Ruby 1.9.1, not a Integer, so I replaced with getbyte. [clbustos]
   * Deleted duplicated definition of ImageNode#style= with attr_writer and def. [clbustos]

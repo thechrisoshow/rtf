@@ -5,3 +5,5 @@ clbustos-rtf.gemspec
 .DS_Store
 coverage
 rtf.gemspec.orig
+*.gemspec
+pkg
