@@ -161,6 +161,11 @@ class CommandNodeTest < Test::Unit::TestCase
       assert(node.prefix == '\sub')
       assert(node.suffix == nil)
       assert(node == root[-1])
+
+      node = root.strike
+      assert(node.prefix == '\strike')
+      assert(node.suffix == nil)
+      assert(node == root[-1])
    end
 
    # Test text node addition.

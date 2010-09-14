@@ -424,6 +424,21 @@ module RTF
          end
       end
 
+      # This method provides a short cut means of creating a strike command
+      # node. The method accepts a block that will be passed a single parameter
+      # which will be a reference to the strike node created. After the
+      # block is complete the strike node is appended to the end of the
+      # child nodes on the object that the method is call against.
+      def strike
+         style        = CharacterStyle.new
+         style.strike = true
+         if block_given?
+            apply(style) {|node| yield node}
+         else
+            apply(style)
+         end
+      end
+
       # This method provides a short cut means of creating a font command node.
       # The method accepts a block that will be passed a single parameter which
       # will be a reference to the font node created. After the block is
