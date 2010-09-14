@@ -1,3 +1,7 @@
+.gitignore
+pkg
+clbustos-rtf.gemspec
 *.sw?
 .DS_Store
 coverage
+rtf.gemspec.orig
