@@ -285,9 +285,9 @@ module RTF
          self.store(node)
       end
 
-      def list
+      def list(kind=:bullets)
         node = ListNode.new(self)
-        yield node
+        yield node.list(kind)
         self.store(node)
       end
 
@@ -566,41 +566,46 @@ module RTF
 
    class ListNode < CommandNode
      def initialize(parent)
-       @items    = []
-       @template = root.lists.new_template
-
        suffix  = '\pard'
        suffix << ListLevel::ResetTabs.map {|tw| "\\tx#{tw}"}.join
        suffix << '\ql\qlnatural\pardirnatural\cf0 \\'
 
-       super(parent, nil, suffix)
+       super(parent, nil, suffix, true, false)
+
+       @template = root.lists.new_template
      end
 
-     def item(level, kind)
-       node = ListLevelNode.new(self, @template, level, kind)
-       yield node if block_given?
+     def list(kind)
+       node = ListLevelNode.new(self, @template, kind)
+       yield node
        self.store(node)
      end
    end
 
    class ListLevelNode < CommandNode
-     def initialize(parent, template, level, kind)
+     def initialize(parent, template, kind, level=1)
        @template = template
+       @kind     = kind
        @level    = template.level_for(level, kind)
 
-       prefix  = StringIO.new
-       prefix << '\pard'
+       prefix  = '\pard'
        prefix << @level.tabs.map {|tw| "\\tx#{tw}"}.join
        prefix << "\\li#{@level.indent}\\fi-#{@level.indent}"
        prefix << "\\ql\\qlnatural\\pardirnatural\n"
        prefix << "\\ls#{@template.id}\\ilvl#{@level.level-1}\\cf0"
 
-       super(parent, prefix)
+       super(parent, prefix, nil, true, false)
      end
 
      def item
        node = ListTextNode.new(parent, @level)
-       yield node if block_given?
+       yield node
+       self.store(node)
+     end
+
+     def list(kind=@kind)
+       node = ListLevelNode.new(self, @template, kind, @level.level+1)
+       yield node
        self.store(node)
      end
    end
@@ -609,10 +614,10 @@ module RTF
      def initialize(parent, level)
        @level = level
 
-       prefix  = StringIO.new
-       prefix << "{\\listtext#{@level.marker.text_format}}"
+       prefix = "{\\listtext#{@level.marker.text_format}}"
+       suffix = '\\'
 
-       super(parent, prefix, "\\")
+       super(parent, prefix, suffix, false, false)
      end
    end
 
