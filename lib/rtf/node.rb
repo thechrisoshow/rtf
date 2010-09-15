@@ -273,12 +273,7 @@ module RTF
       #          for the new paragraph. Defaults to nil to indicate that the
       #          currently applied paragraph styling should be used.
       def paragraph(style=nil)
-         # Create the node prefix.
-         text = StringIO.new
-         text << '\pard'
-         text << style.prefix(nil, nil) if style != nil
-
-         node = CommandNode.new(self, text.string, '\par')
+         node = ParagraphNode.new(self, style)
          yield node if block_given?
          self.store(node)
       end
@@ -546,6 +541,16 @@ module RTF
       alias :split? :split
    end # End of the CommandNode class.
 
+   class ParagraphNode < CommandNode
+     def initialize(parent, style=nil)
+       prefix = '\pard'
+       prefix << style.prefix(nil, nil) if style
+
+       suffix = '\par'
+
+       super(parent, prefix, suffix)
+     end
+   end
 
    # This class represents a table node within an RTF document. Table nodes are
    # specialised container nodes that contain only TableRowNodes and have their

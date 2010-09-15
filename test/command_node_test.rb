@@ -40,7 +40,7 @@ class CommandNodeTest < Test::Unit::TestCase
 
       assert(root.paragraph(style) != nil)
       assert(root.size == 1)
-      assert(root[0].class == CommandNode)
+      assert(root[0].class == ParagraphNode)
       assert(root[0].prefix == '\pard\ql')
       assert(root[0].suffix == '\par')
       assert(root.split == true)
