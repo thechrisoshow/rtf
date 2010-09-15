@@ -14,10 +14,8 @@ module RTF
 
       prefix = indent > 0 ? ' ' * indent : ''
 
-      text = StringIO.new
-
       # List table
-      text << "#{prefix}{\\*\\listtable"
+      text = "#{prefix}{\\*\\listtable"
       @templates.each {|tpl| text << tpl.to_rtf}
       text << "}"
 
@@ -27,8 +25,6 @@ module RTF
         text << "{\\listoverride\\listid#{tpl.id}\\listoverridecount0\\ls#{tpl.id}}"
       end
       text << "}\n"
-
-      text.string
     end
 
     protected
@@ -120,7 +116,7 @@ module RTF
       @levels.each {|lvl| text << lvl.to_rtf}
       text << "{\\listname;}\\listid#{id}}\n"
 
-      text.string
+      text
     end
   end
 
@@ -189,8 +185,7 @@ module RTF
     def to_rtf(indent=0)
       prefix = indent > 0 ? ' ' * indent : ''
 
-      text = StringIO.new
-      text << "#{prefix}{\\listlevel\\levelstartat0"
+      text  = "#{prefix}{\\listlevel\\levelstartat0"
       
       # Marker type. The first declaration is for Backward Compatibility (BC).
       nfc  = @marker.number_type
@@ -214,8 +209,6 @@ module RTF
 
       # The actual spacing
       text << "\\fi-360\\li#{self.indent}\\lin#{self.indent}}\n"
-
-      text.string
     end
 
   end
