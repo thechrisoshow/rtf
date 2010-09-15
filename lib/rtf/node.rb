@@ -310,6 +310,13 @@ module RTF
         self.store(node)
       end
 
+      def link(url, text=nil)
+        node = LinkNode.new(self, url)
+        node << text if text
+        yield node   if block_given?
+        self.store(node)
+      end
+
       # This method provides a short cut means of creating a line break command
       # node. This command node does not take a block and may possess no other
       # content.
@@ -675,6 +682,15 @@ module RTF
        def siblings_count
          parent.children.select {|n| n.kind_of?(self.class)}.size
        end
+   end
+
+   class LinkNode < CommandNode
+     def initialize(parent, url)
+       prefix = "\\field{\\*\\fldinst HYPERLINK \"#{url}\"}{\\fldrslt "
+       suffix = "}"
+
+       super(parent, prefix, suffix, false)
+     end
    end
 
    # This class represents a table node within an RTF document. Table nodes are
