@@ -1,3 +1,14 @@
+== Purpose of this fork
+
+ * Add support for ordered and unordered lists [done]
+ * Write comprehensive tests for OL and UL [TODO]
+ * Clean up the API [TODO]
+ * DRY the code [TODO]
+
+Please, please, please: if you come along this library and would lend me an
+hand to complete tests, please help. Thank you!
+
+
 == Ruby Rich Text Format (RTF) Library
 The RTF library provides a pure Ruby set of functionality that can be used to
 programmatically create RTF documents. The main aim in developing this library
