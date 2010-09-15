@@ -65,7 +65,7 @@ name space. This is a convenience mechanism that saves on specifically having
 to refer to the module when accessing the RTF library. Next we want to create
 an RTF document and that is done like this...
 
-   document = RTF::Document.new(RTF::Font::ROMAN)
+   document = RTF::Document.new(RTF::Font.new(RTF::Font::ROMAN, 'Times New Roman'))
 
 This line of code creates a new Document object, specifying that the default
 font for the document will the the Times New Roman font. So we have a document,
