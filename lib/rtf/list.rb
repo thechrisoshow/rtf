@@ -35,8 +35,6 @@ module RTF
   end
 
   class ListMarker
-    attr_reader :name
-
     def initialize(name, codepoint=nil)
       @name      = name
       @codepoint = codepoint
@@ -57,6 +55,12 @@ module RTF
       bullet? ? 23 : 0
     end
 
+    def name
+      name  = "\\{#@name\\}"
+      name << '.' unless bullet?
+      name
+    end
+
     def template_format
       # The first char is the string size, the next ones are
       # either placeholders (\'0X) or actual characters to
@@ -70,7 +74,7 @@ module RTF
       if bullet?
         "\\'01\\uc0\\u#@codepoint"
       else
-        "\\'02\\'00."
+        "\\'02\\'00. "
       end
     end
 
@@ -185,7 +189,7 @@ module RTF
     def to_rtf(indent=0)
       prefix = indent > 0 ? ' ' * indent : ''
 
-      text  = "#{prefix}{\\listlevel\\levelstartat0"
+      text  = "#{prefix}{\\listlevel\\levelstartat1"
       
       # Marker type. The first declaration is for Backward Compatibility (BC).
       nfc  = @marker.number_type
@@ -201,7 +205,7 @@ module RTF
       text << '\levelindent0\levelspace360'
 
       # Marker name
-      text << "{\\*\\levelmarker \\{#{@marker.name}\\} }"
+      text << "{\\*\\levelmarker #{@marker.name}}"
 
       # Marker text format
       text << "{\\leveltext\\leveltemplateid#{id}#{@marker.template_format};}"
