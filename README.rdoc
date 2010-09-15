@@ -1,9 +1,10 @@
 == Purpose of this fork
 
- * Add support for ordered and unordered lists [done]
- * Write comprehensive tests for OL and UL [TODO]
- * Clean up the API [TODO]
- * DRY the code [TODO]
+ * [DONE] Add support for ordered and unordered lists
+ * [DONE] Add support for hyperlinks
+ * [TODO] Write comprehensive tests for OL and UL
+ * [TODO] Clean up the API
+ * [TODO] DRY the code
 
 Please, please, please: if you come along this library and would lend me an
 hand to complete tests, please help. Thank you!
