@@ -595,12 +595,14 @@ module RTF
        super(parent, prefix, nil, true, false)
      end
 
+     attr_reader :kind
+
      def level
        @level.level
      end
 
      def item
-       node = ListTextNode.new(parent, @level)
+       node = ListTextNode.new(self, @level)
        yield node
        self.store(node)
      end
@@ -614,12 +616,18 @@ module RTF
 
    class ListTextNode < CommandNode
      def initialize(parent, level)
-       @level = level
+       @level  = level
+       @parent = parent
 
-       prefix = "{\\listtext#{@level.marker.text_format}}"
+       number = siblings_count + 1 if parent.kind == :decimal
+       prefix = "{\\listtext#{@level.marker.text_format(number)}}"
        suffix = '\\'
 
        super(parent, prefix, suffix, false, false)
+     end
+
+     def siblings_count
+       parent.children.select {|n| n.kind_of?(self.class)}.size
      end
    end
 
