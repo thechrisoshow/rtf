@@ -285,6 +285,25 @@ module RTF
          self.store(node)
       end
 
+      # This method provides a short cut means of creating a new ordered or
+      # unordered list. The method requires a block that will be passed a
+      # single parameter that'll be a reference to the first level of the
+      # list. See the +ListLevelNode+ doc for more information.
+      #
+      # Example usage:
+      #
+      #   rtf.list do |level1|
+      #     level1.item do |li|
+      #       li << 'some text'
+      #       li.apply(some_style) {|x| x << 'some styled text'}
+      #     end
+      #
+      #     level1.list(:decimal) do |level2|
+      #       level2.item {|li| li << 'some other text in a decimal list'}
+      #       level2.item {|li| li << 'and here we go'}
+      #     end
+      #   end
+      #
       def list(kind=:bullets)
         node = ListNode.new(self)
         yield node.list(kind)
@@ -555,6 +574,7 @@ module RTF
       alias :wrap?  :wrap
    end # End of the CommandNode class.
 
+   # This class represents a paragraph within an RTF document.
    class ParagraphNode < CommandNode
      def initialize(parent, style=nil)
        prefix = '\pard'
@@ -564,6 +584,12 @@ module RTF
      end
    end
 
+   # This class represents an ordered/unordered list within an RTF document.
+   #
+   # Currently list nodes can contain any type of node, but this behaviour
+   # will change in future releases. The class overrides the +list+ method
+   # to return a +ListLevelNode+.
+   #
    class ListNode < CommandNode
      def initialize(parent)
        suffix  = '\pard'
@@ -575,11 +601,21 @@ module RTF
        @template = root.lists.new_template
      end
 
+     # This method creates a new +ListLevelNode+ of the given kind and
+     # stores it in the document tree.
+     #
+     # ==== Parameters
+     # kind::  The kind of this list level, may be either :bullets or :decimal
      def list(kind)
        self.store ListLevelNode.new(self, @template, kind)
      end
    end
 
+   # This class represents a list level, and carries out indenting information
+   # and the bullet or number that is prepended to each +ListTextNode+.
+   #
+   # The class overrides the +list+ method to implement nesting, and provides
+   # the +item+ method to add a new list item, the +ListTextNode+.
    class ListLevelNode < CommandNode
      def initialize(parent, template, kind, level=1)
        @template = template
@@ -595,18 +631,22 @@ module RTF
        super(parent, prefix, nil, true, false)
      end
 
+     # Returns the kind of this level, either :bullets or :decimal
      attr_reader :kind
 
+     # Returns the indenting level of this list, from 1 to 9
      def level
        @level.level
      end
 
+     # Creates a new +ListTextNode+ and yields it to the calling block
      def item
        node = ListTextNode.new(self, @level)
        yield node
        self.store(node)
      end
 
+     # Creates a new +ListLevelNode+ to implement nested lists
      def list(kind=@kind)
        node = ListLevelNode.new(self, @template, kind, @level.level+1)
        yield node
@@ -614,6 +654,9 @@ module RTF
      end
    end
 
+   # This class represents a list item, that can contain text or
+   # other nodes. Currently any type of node is accepted, but after
+   # more extensive testing this behaviour may change.
    class ListTextNode < CommandNode
      def initialize(parent, level)
        @level  = level
@@ -626,9 +669,10 @@ module RTF
        super(parent, prefix, suffix, false, false)
      end
 
-     def siblings_count
-       parent.children.select {|n| n.kind_of?(self.class)}.size
-     end
+     private
+       def siblings_count
+         parent.children.select {|n| n.kind_of?(self.class)}.size
+       end
    end
 
    # This class represents a table node within an RTF document. Table nodes are
