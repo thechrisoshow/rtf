@@ -212,6 +212,9 @@ module RTF
       # be written to separate lines whether the node is converted
       # to RTF. Defaults to true
       attr_accessor :split
+      # A boolean to indicate whether the prefix and suffix should
+      # be wrapped in curly braces. Defaults to true.
+      attr_accessor :wrap
 
       # This is the constructor for the CommandNode class.
       #
@@ -223,11 +226,14 @@ module RTF
       # split::   A boolean to indicate whether the prefix and suffix should
       #           be written to separate lines whether the node is converted
       #           to RTF. Defaults to true.
-      def initialize(parent, prefix, suffix=nil, split=true)
+      # wrap::    A boolean to indicate whether the prefix and suffix should
+      #           be wrapped in curly braces. Defaults to true.
+      def initialize(parent, prefix, suffix=nil, split=true, wrap=true)
          super(parent)
          @prefix = prefix
          @suffix = suffix
          @split  = split
+         @wrap   = wrap
       end
 
       # This method adds text to a command node. If the last child node of the
@@ -246,19 +252,20 @@ module RTF
 
       # This method generates the RTF text for a CommandNode object.
       def to_rtf
-         text      = StringIO.new
-         separator = split? ? "\n" : " "
-         line      = (separator == " ")
+         text = StringIO.new
 
-         text << "{#{@prefix}"
-         text << separator if self.size > 0
+         text << '{'       if wrap?
+         text << @prefix   if @prefix
+
          self.each do |entry|
-            text << "\n" if line
-            line = true
-            text << "#{entry.to_rtf}"
+            text << "\n" if split?
+            text << entry.to_rtf
          end
-         text << "\n" if split?
-         text << "#{@suffix}}"
+
+         text << "\n"    if split?
+         text << @suffix if @suffix
+         text << '}'     if wrap?
+
          text.string
       end
 
@@ -536,9 +543,10 @@ module RTF
          node
       end
 
-      alias :write :<<
-      alias :color :colour
+      alias :write  :<<
+      alias :color  :colour
       alias :split? :split
+      alias :wrap?  :wrap
    end # End of the CommandNode class.
 
    class ParagraphNode < CommandNode
