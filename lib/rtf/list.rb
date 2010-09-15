@@ -61,7 +61,7 @@ module RTF
       bullet? ? 23 : 0
     end
 
-    def text_format
+    def template_format
       # The first char is the string size, the next ones are
       # either placeholders (\'0X) or actual characters to
       # include in the format. In the bullet case, \uc0 is
@@ -76,6 +76,17 @@ module RTF
       else
         "\\'02\\'00."
       end
+    end
+
+    def text_format(n=nil)
+      text = 
+        if bullet?
+          "\\uc0\\u#@codepoint"
+        else
+          "#{n}."
+        end
+
+      "\t#{text}\t"
     end
   end
 
@@ -116,21 +127,19 @@ module RTF
   class ListLevel
     ValidLevels = (1..9)
 
-    Markers = {
-      :disc    => ListMarker.new('disc',    0x2022),
-      :hyphen  => ListMarker.new('hyphen',  0x2043),
-      :decimal => ListMarker.new('decimal'        )
-    }
+    LevelTabs = [
+      220,  720,  1133, 1700, 2267,
+      2834, 3401, 3968, 4535, 5102,
+      5669, 6236, 6803
+    ].freeze
 
-    Tabs = [ 220,  720,  1133, 1700, 2267,
-             2834, 3401, 3968, 4535, 5102,
-             5669, 6236, 6803 ].freeze
+    ResetTabs = [560].concat(LevelTabs[2..-1]).freeze
 
-    attr_reader :level
+    attr_reader :level, :marker
 
-    def initialize(template, type, level = 1)
-      unless Markers.has_key?(type)
-        RTFError.fire("Invalid marker type #{type}")
+    def initialize(template, marker, level)
+      unless marker.kind_of? ListMarker
+        RTFError.fire("Invalid marker #{marker.inspect}")
       end
 
       unless ValidLevels.include? level
@@ -146,9 +155,13 @@ module RTF
       @marker.type
     end
 
+    def reset_tabs
+      ResetTabs
+    end
+
     def tabs
       @tabs ||= begin
-        tabs = Tabs.dup # Kernel#tap would be prettier here
+        tabs = LevelTabs.dup # Kernel#tap would be prettier here
 
         (@level - 1).times do
           # Reverse-engineered while looking at Textedit.app
@@ -163,6 +176,14 @@ module RTF
 
         tabs
       end
+    end
+
+    def id
+      @id ||= @template.id * 10 + level
+    end
+
+    def indent
+      @indent ||= level * 720
     end
 
     def to_rtf(indent=0)
@@ -188,23 +209,14 @@ module RTF
       text << "{\\*\\levelmarker \\{#{@marker.name}\\} }"
 
       # Marker text format
-      text << "{\\leveltext\\leveltemplateid#{id}#{@marker.text_format};}"
+      text << "{\\leveltext\\leveltemplateid#{id}#{@marker.template_format};}"
       text << '{\levelnumbers;}'
 
       # The actual spacing
-      text << "\\fi-360\\li#{indent_tweeps}\\lin#{indent_tweeps}}\n"
+      text << "\\fi-360\\li#{self.indent}\\lin#{self.indent}}\n"
 
       text.string
     end
-
-    protected
-      def id
-        @id ||= @template.id * 10 + level
-      end
-
-      def indent_tweeps
-        level * 720
-      end
 
   end
 end

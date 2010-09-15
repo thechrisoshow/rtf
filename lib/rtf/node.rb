@@ -285,6 +285,12 @@ module RTF
          self.store(node)
       end
 
+      def list
+        node = ListNode.new(self)
+        yield node
+        self.store(node)
+      end
+
       # This method provides a short cut means of creating a line break command
       # node. This command node does not take a block and may possess no other
       # content.
@@ -554,9 +560,59 @@ module RTF
        prefix = '\pard'
        prefix << style.prefix(nil, nil) if style
 
-       suffix = '\par'
+       super(parent, prefix, '\par')
+     end
+   end
 
-       super(parent, prefix, suffix)
+   class ListNode < CommandNode
+     def initialize(parent)
+       @items    = []
+       @template = root.lists.new_template
+
+       suffix  = '\pard'
+       suffix << ListLevel::ResetTabs.map {|tw| "\\tx#{tw}"}.join
+       suffix << '\ql\qlnatural\pardirnatural\cf0 \\'
+
+       super(parent, nil, suffix)
+     end
+
+     def item(level, kind)
+       node = ListLevelNode.new(self, @template, level, kind)
+       yield node if block_given?
+       self.store(node)
+     end
+   end
+
+   class ListLevelNode < CommandNode
+     def initialize(parent, template, level, kind)
+       @template = template
+       @level    = template.level_for(level, kind)
+
+       prefix  = StringIO.new
+       prefix << '\pard'
+       prefix << @level.tabs.map {|tw| "\\tx#{tw}"}.join
+       prefix << "\\li#{@level.indent}\\fi-#{@level.indent}"
+       prefix << "\\ql\\qlnatural\\pardirnatural\n"
+       prefix << "\\ls#{@template.id}\\ilvl#{@level.level-1}\\cf0"
+
+       super(parent, prefix)
+     end
+
+     def item
+       node = ListTextNode.new(parent, @level)
+       yield node if block_given?
+       self.store(node)
+     end
+   end
+
+   class ListTextNode < CommandNode
+     def initialize(parent, level)
+       @level = level
+
+       prefix  = StringIO.new
+       prefix << "{\\listtext#{@level.marker.text_format}}"
+
+       super(parent, prefix, "\\")
      end
    end
 
@@ -964,19 +1020,8 @@ module RTF
       # ComamndNode class to forbid the creation of paragraphs.
       #
       # ==== Parameters
-      # justification::  The justification to be applied to the paragraph.
-      # before::         The amount of space, in twips, to be inserted before
-      #                  the paragraph. Defaults to nil.
-      # after::          The amount of space, in twips, to be inserted after
-      #                  the paragraph. Defaults to nil.
-      # left::           The amount of indentation to place on the left of the
-      #                  paragraph. Defaults to nil.
-      # right::          The amount of indentation to place on the right of the
-      #                  paragraph. Defaults to nil.
-      # first::          The amount of indentation to place on the left of the
-      #                  first line in the paragraph. Defaults to nil.
-      def paragraph(justification=CommandNode::LEFT_JUSTIFY, before=nil,
-                    after=nil, left=nil, right=nil, first=nil)
+      # style::  The paragraph style, ignored
+      def paragraph(style=nil)
          RTFError.fire("TableCellNode#paragraph() called. Table cells cannot "\
                        "contain paragraphs.")
       end
@@ -1509,8 +1554,8 @@ module RTF
       LC_VIETNAMESE                    = 1066
 
       # Attribute accessor.
-      attr_reader :fonts, :colours, :information, :character_set, :language,
-                  :style
+      attr_reader :fonts, :lists, :colours, :information, :character_set,
+                  :language, :style
 
       # Attribute mutator.
       attr_writer :character_set, :language
