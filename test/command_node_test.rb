@@ -207,6 +207,32 @@ class CommandNodeTest < Test::Unit::TestCase
       assert(table[0][2].width == 200)
    end
 
+   # List object model test
+   def test_list
+      root = Document.new(Font.new(Font::ROMAN, 'Arial'))
+      root.list do |l1|
+        assert l1.class == ListLevelNode
+        assert l1.level == 1
+
+        l1.item do |li|
+          assert li.class == ListTextNode
+          text = li << 'text'
+          assert text.class == TextNode
+          assert text.text == 'text'
+        end
+
+        l1.list do |l2|
+          assert l2.class == ListLevelNode
+          assert l2.level == 2
+          l2.item do |li|
+            text = li << 'text'
+            assert text.class == TextNode
+            assert text.text == 'text'
+          end
+        end
+      end
+   end
+
    # This test checks the previous_node and next_node methods that could not be
    # fully and properly checked in the NodeTest.rb file.
    def test_peers

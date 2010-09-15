@@ -576,9 +576,7 @@ module RTF
      end
 
      def list(kind)
-       node = ListLevelNode.new(self, @template, kind)
-       yield node
-       self.store(node)
+       self.store ListLevelNode.new(self, @template, kind)
      end
    end
 
@@ -595,6 +593,10 @@ module RTF
        prefix << "\\ls#{@template.id}\\ilvl#{@level.level-1}\\cf0"
 
        super(parent, prefix, nil, true, false)
+     end
+
+     def level
+       @level.level
      end
 
      def item
