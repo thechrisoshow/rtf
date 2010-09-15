@@ -1529,6 +1529,7 @@ module RTF
       def initialize(font, style=nil, character=CS_ANSI, language=LC_ENGLISH_UK)
          super(nil, '\rtf1')
          @fonts         = FontTable.new(font)
+         @lists         = ListTable.new
          @default_font  = 0
          @colours       = ColourTable.new
          @information   = Information.new
@@ -1682,6 +1683,7 @@ module RTF
          text << "\n#{@fonts.to_rtf}"
          text << "\n#{@colours.to_rtf}" if @colours.size > 0
          text << "\n#{@information.to_rtf}"
+         text << "\n#{@lists.to_rtf}"
          if @headers.compact != []
             text << "\n#{@headers[3].to_rtf}" if @headers[3] != nil
             text << "\n#{@headers[2].to_rtf}" if @headers[2] != nil
