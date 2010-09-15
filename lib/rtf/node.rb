@@ -592,11 +592,13 @@ module RTF
    #
    class ListNode < CommandNode
      def initialize(parent)
+       prefix  = "\\"
+
        suffix  = '\pard'
        suffix << ListLevel::ResetTabs.map {|tw| "\\tx#{tw}"}.join
        suffix << '\ql\qlnatural\pardirnatural\cf0 \\'
 
-       super(parent, nil, suffix, true, false)
+       super(parent, prefix, suffix, true, false)
 
        @template = root.lists.new_template
      end
