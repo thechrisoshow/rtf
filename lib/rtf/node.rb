@@ -117,10 +117,11 @@ module RTF
         rtf=(@text == nil ? '' : @text.gsub("{", "\\{").gsub("}", "\\}").gsub("\\", "\\\\"))
         # Encode as Unicode.
         if RUBY_VERSION>"1.9.0"
-          rtf.encode("UTF-16LE").each_codepoint.map {|cp|
+          return rtf.encode("UTF-16LE").each_codepoint.map {|cp|
             cp < 128 ? cp.chr : "\\u#{cp}\\'3f"
           }.join("")
         end
+        rtf
       end
    end # End of the TextNode class.
 
