@@ -1,4 +1,4 @@
-require 'test_helper'
+require File.expand_path(File.dirname(__FILE__)+'/test_helper')
 
 # Font class unit test class.
 class FontTest < Test::Unit::TestCase

@@ -1,4 +1,4 @@
-$:.unshift(File.dirname(__FILE__))
+$:.unshift(File.expand_path(File.dirname(__FILE__)))
 require 'rake'
 
 begin

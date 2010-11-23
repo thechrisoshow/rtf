@@ -1,6 +1,6 @@
 $:.unshift(File.dirname(__FILE__)+"/../lib")
 
-require 'test_helper'
+require File.expand_path(File.dirname(__FILE__)+'/test_helper')
 
 # Colour class unit test class.
 class ImageNodeTest < Test::Unit::TestCase

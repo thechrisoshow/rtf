@@ -1,4 +1,4 @@
-require 'test_helper'
+require File.expand_path(File.dirname(__FILE__)+'/test_helper')
 
 # Information class unit test class.
 class ContainerNodeTest < Test::Unit::TestCase
