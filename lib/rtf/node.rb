@@ -212,6 +212,9 @@ module RTF
       # be written to separate lines whether the node is converted
       # to RTF. Defaults to true
       attr_accessor :split
+      # A boolean to indicate whether the prefix and suffix should
+      # be wrapped in curly braces. Defaults to true.
+      attr_accessor :wrap
 
       # This is the constructor for the CommandNode class.
       #
@@ -223,11 +226,14 @@ module RTF
       # split::   A boolean to indicate whether the prefix and suffix should
       #           be written to separate lines whether the node is converted
       #           to RTF. Defaults to true.
-      def initialize(parent, prefix, suffix=nil, split=true)
+      # wrap::    A boolean to indicate whether the prefix and suffix should
+      #           be wrapped in curly braces. Defaults to true.
+      def initialize(parent, prefix, suffix=nil, split=true, wrap=true)
          super(parent)
          @prefix = prefix
          @suffix = suffix
          @split  = split
+         @wrap   = wrap
       end
 
       # This method adds text to a command node. If the last child node of the
@@ -246,19 +252,20 @@ module RTF
 
       # This method generates the RTF text for a CommandNode object.
       def to_rtf
-         text      = StringIO.new
-         separator = split? ? "\n" : " "
-         line      = (separator == " ")
+         text = StringIO.new
 
-         text << "{#{@prefix}"
-         text << separator if self.size > 0
+         text << '{'       if wrap?
+         text << @prefix   if @prefix
+
          self.each do |entry|
-            text << "\n" if line
-            line = true
-            text << "#{entry.to_rtf}"
+            text << "\n" if split?
+            text << entry.to_rtf
          end
-         text << "\n" if split?
-         text << "#{@suffix}}"
+
+         text << "\n"    if split?
+         text << @suffix if @suffix
+         text << '}'     if wrap?
+
          text.string
       end
 
@@ -273,14 +280,41 @@ module RTF
       #          for the new paragraph. Defaults to nil to indicate that the
       #          currently applied paragraph styling should be used.
       def paragraph(style=nil)
-         # Create the node prefix.
-         text = StringIO.new
-         text << '\pard'
-         text << style.prefix(nil, nil) if style != nil
-
-         node = CommandNode.new(self, text.string, '\par')
+         node = ParagraphNode.new(self, style)
          yield node if block_given?
          self.store(node)
+      end
+
+      # This method provides a short cut means of creating a new ordered or
+      # unordered list. The method requires a block that will be passed a
+      # single parameter that'll be a reference to the first level of the
+      # list. See the +ListLevelNode+ doc for more information.
+      #
+      # Example usage:
+      #
+      #   rtf.list do |level1|
+      #     level1.item do |li|
+      #       li << 'some text'
+      #       li.apply(some_style) {|x| x << 'some styled text'}
+      #     end
+      #
+      #     level1.list(:decimal) do |level2|
+      #       level2.item {|li| li << 'some other text in a decimal list'}
+      #       level2.item {|li| li << 'and here we go'}
+      #     end
+      #   end
+      #
+      def list(kind=:bullets)
+        node = ListNode.new(self)
+        yield node.list(kind)
+        self.store(node)
+      end
+
+      def link(url, text=nil)
+        node = LinkNode.new(self, url)
+        node << text if text
+        yield node   if block_given?
+        self.store(node)
       end
 
       # This method provides a short cut means of creating a line break command
@@ -541,11 +575,123 @@ module RTF
          node
       end
 
-      alias :write :<<
-      alias :color :colour
+      alias :write  :<<
+      alias :color  :colour
       alias :split? :split
+      alias :wrap?  :wrap
    end # End of the CommandNode class.
 
+   # This class represents a paragraph within an RTF document.
+   class ParagraphNode < CommandNode
+     def initialize(parent, style=nil)
+       prefix = '\pard'
+       prefix << style.prefix(nil, nil) if style
+
+       super(parent, prefix, '\par')
+     end
+   end
+
+   # This class represents an ordered/unordered list within an RTF document.
+   #
+   # Currently list nodes can contain any type of node, but this behaviour
+   # will change in future releases. The class overrides the +list+ method
+   # to return a +ListLevelNode+.
+   #
+   class ListNode < CommandNode
+     def initialize(parent)
+       prefix  = "\\"
+
+       suffix  = '\pard'
+       suffix << ListLevel::ResetTabs.map {|tw| "\\tx#{tw}"}.join
+       suffix << '\ql\qlnatural\pardirnatural\cf0 \\'
+
+       super(parent, prefix, suffix, true, false)
+
+       @template = root.lists.new_template
+     end
+
+     # This method creates a new +ListLevelNode+ of the given kind and
+     # stores it in the document tree.
+     #
+     # ==== Parameters
+     # kind::  The kind of this list level, may be either :bullets or :decimal
+     def list(kind)
+       self.store ListLevelNode.new(self, @template, kind)
+     end
+   end
+
+   # This class represents a list level, and carries out indenting information
+   # and the bullet or number that is prepended to each +ListTextNode+.
+   #
+   # The class overrides the +list+ method to implement nesting, and provides
+   # the +item+ method to add a new list item, the +ListTextNode+.
+   class ListLevelNode < CommandNode
+     def initialize(parent, template, kind, level=1)
+       @template = template
+       @kind     = kind
+       @level    = template.level_for(level, kind)
+
+       prefix  = '\pard'
+       prefix << @level.tabs.map {|tw| "\\tx#{tw}"}.join
+       prefix << "\\li#{@level.indent}\\fi-#{@level.indent}"
+       prefix << "\\ql\\qlnatural\\pardirnatural\n"
+       prefix << "\\ls#{@template.id}\\ilvl#{@level.level-1}\\cf0"
+
+       super(parent, prefix, nil, true, false)
+     end
+
+     # Returns the kind of this level, either :bullets or :decimal
+     attr_reader :kind
+
+     # Returns the indenting level of this list, from 1 to 9
+     def level
+       @level.level
+     end
+
+     # Creates a new +ListTextNode+ and yields it to the calling block
+     def item
+       node = ListTextNode.new(self, @level)
+       yield node
+       self.store(node)
+     end
+
+     # Creates a new +ListLevelNode+ to implement nested lists
+     def list(kind=@kind)
+       node = ListLevelNode.new(self, @template, kind, @level.level+1)
+       yield node
+       self.store(node)
+     end
+   end
+
+   # This class represents a list item, that can contain text or
+   # other nodes. Currently any type of node is accepted, but after
+   # more extensive testing this behaviour may change.
+   class ListTextNode < CommandNode
+     def initialize(parent, level)
+       @level  = level
+       @parent = parent
+
+       number = siblings_count + 1 if parent.kind == :decimal
+       prefix = "{\\listtext#{@level.marker.text_format(number)}}"
+       suffix = '\\'
+
+       super(parent, prefix, suffix, false, false)
+     end
+
+     private
+       def siblings_count
+         parent.children.select {|n| n.kind_of?(self.class)}.size
+       end
+   end
+
+   class LinkNode < CommandNode
+     def initialize(parent, url)
+       prefix = "\\field{\\*\\fldinst HYPERLINK \"#{url}\"}{\\fldrslt "
+       suffix = "}"
+
+       super(parent, prefix, suffix, false)
+     end
+   end
 
    # This class represents a table node within an RTF document. Table nodes are
    # specialised container nodes that contain only TableRowNodes and have their
@@ -951,19 +1097,8 @@ module RTF
       # ComamndNode class to forbid the creation of paragraphs.
       #
       # ==== Parameters
-      # justification::  The justification to be applied to the paragraph.
-      # before::         The amount of space, in twips, to be inserted before
-      #                  the paragraph. Defaults to nil.
-      # after::          The amount of space, in twips, to be inserted after
-      #                  the paragraph. Defaults to nil.
-      # left::           The amount of indentation to place on the left of the
-      #                  paragraph. Defaults to nil.
-      # right::          The amount of indentation to place on the right of the
-      #                  paragraph. Defaults to nil.
-      # first::          The amount of indentation to place on the left of the
-      #                  first line in the paragraph. Defaults to nil.
-      def paragraph(justification=CommandNode::LEFT_JUSTIFY, before=nil,
-                    after=nil, left=nil, right=nil, first=nil)
+      # style::  The paragraph style, ignored
+      def paragraph(style=nil)
          RTFError.fire("TableCellNode#paragraph() called. Table cells cannot "\
                        "contain paragraphs.")
       end
@@ -1496,8 +1631,8 @@ module RTF
       LC_VIETNAMESE                    = 1066
 
       # Attribute accessor.
-      attr_reader :fonts, :colours, :information, :character_set, :language,
-                  :style
+      attr_reader :fonts, :lists, :colours, :information, :character_set,
+                  :language, :style
 
       # Attribute mutator.
       attr_writer :character_set, :language
@@ -1516,6 +1651,7 @@ module RTF
       def initialize(font, style=nil, character=CS_ANSI, language=LC_ENGLISH_UK)
          super(nil, '\rtf1')
          @fonts         = FontTable.new(font)
+         @lists         = ListTable.new
          @default_font  = 0
          @colours       = ColourTable.new
          @information   = Information.new
@@ -1669,6 +1805,7 @@ module RTF
          text << "\n#{@fonts.to_rtf}"
          text << "\n#{@colours.to_rtf}" if @colours.size > 0
          text << "\n#{@information.to_rtf}"
+         text << "\n#{@lists.to_rtf}"
          if @headers.compact != []
             text << "\n#{@headers[3].to_rtf}" if @headers[3] != nil
             text << "\n#{@headers[2].to_rtf}" if @headers[2] != nil
