@@ -115,13 +115,20 @@ module RTF
       # method escapes any special sequences that appear in the text.
       def to_rtf
         rtf=(@text == nil ? '' : @text.gsub("{", "\\{").gsub("}", "\\}").gsub("\\", "\\\\"))
+        # This is from lfarcy / rtf-extensions 
+        # I don't see the point of coding different 128<n<256 range
+        
+        #f1=lambda { |n| n < 128 ? n.chr : n < 256 ? "\\'#{n.to_s(16)}" : "\\u#{n}\\'3f" }
         # Encode as Unicode.
+        
+        f=lambda { |n| n < 128 ? n.chr : "\\u#{n}\\'3f" }
+        # Ruby 1.9 is safe, cause detect original encoding
+        # and convert text to utf-16 first
         if RUBY_VERSION>"1.9.0"
-          rtf.encode("UTF-16LE").each_codepoint.map {|cp|
-            cp < 128 ? cp.chr : "\\u#{cp}\\'3f"
-          }.join("")
+          return rtf.encode("UTF-16LE", :undef=>:replace).each_codepoint.map(&f).join('')
         else
-          rtf
+          # You SHOULD use UTF-8 as input, ok?
+          return rtf.unpack('U*').map(&f).join('')
         end
       end
    end # End of the TextNode class.

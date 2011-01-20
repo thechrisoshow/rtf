@@ -1,3 +1,4 @@
+# encoding:UTF-8
 require File.expand_path(File.dirname(__FILE__)+'/test_helper')
 
 # Information class unit test class.
@@ -46,5 +47,20 @@ class TextNodeTest < Test::Unit::TestCase
          flunk('Successfully created a TextNode with a nil parent.')
       rescue => error
       end
+   end
+   def test_utf8
+     nodes = []
+     nodes.push(TextNode.new(@node))
+     nodes.push(TextNode.new(@node))
+
+     nodes[0].text="ASCCI"
+     assert_equal("ASCCI", nodes[0].to_rtf)
+     
+     
+     utf8="Á"
+     exp="\\u#{utf8.unpack("U")[0]}\\'3f"
+     nodes[0].text=utf8
+     assert_equal(exp, nodes[0].to_rtf)
+     
    end
 end
