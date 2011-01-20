@@ -1,11 +1,10 @@
-== CHANGES
-0.4.2 
+=== 0.4.2 
   * Fix bug causing TextNode.to_rtf to return nil under 1.8.7[Jason Langenauer]
   * Tests run under Ruby 1.9.2 and later [clbustos]
-0.4.1
+=== 0.4.1
   * Links: implemented hyperlinks[Marcello Barnaba]
   * Lists: add a newline before every new list[Marcello Barnaba]
-0.4.0
+=== 0.4.0
   * Lists: Decimal: quick&dirty implementation of sequential numbering[Marcello Barnaba]
   * Lists: Decimal: fixed marker name generation: it must contain the dot[Marcello Barnaba]
   * Lists: removed last StringIO occurrences in new code[Marcello Barnaba]
@@ -15,9 +14,8 @@
   * Lists: initial implementation of listtable header generation[Marcello Barnaba]
   * Node: cleaned up the generic to_rtf, added the .wrap option to the constructor[Marcello Barnaba]
   * Node: stubbed out paragraph generation into a new ParagraphNode[Marcello Barnaba]
-0.3.1
+=== 0.3.1
   * Added the #subscript helper to the CommandNode class [vjt]
-
-0.3.0
+=== 0.3.0
   * Resolve problems on Ruby 1.9.1 with ImageNode#read_source. Peter uses IO#getc, which returns a String on Ruby 1.9.1, not a Integer, so I replaced with getbyte. [clbustos]
   * Deleted duplicated definition of ImageNode#style= with attr_writer and def. [clbustos]

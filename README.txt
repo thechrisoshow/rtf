@@ -1,7 +1,12 @@
+= rtf
+
+* https://github.com/clbustos/rtf
+
 == Purpose of this fork
 
  * [DONE] Add support for ordered and unordered lists
  * [DONE] Add support for hyperlinks
+ * [DONE] Support for UTF8 text
  * [TODO] Write comprehensive tests for OL and UL
  * [TODO] Clean up the API
  * [TODO] DRY the code
@@ -9,8 +14,8 @@
 Please, please, please: if you come along this library and would lend me an
 hand to complete tests, please help. Thank you!
 
+== DESCRIPTION:
 
-== Ruby Rich Text Format (RTF) Library
 The RTF library provides a pure Ruby set of functionality that can be used to
 programmatically create RTF documents. The main aim in developing this library
 is to ease the complexity involved in assembling RTF documents although some
@@ -30,7 +35,8 @@ In creating this library I set out to make it reasonably easy to create RTF
 documents in code. Having said that I'm certain that it is possible to generate
 invalid RTF documents with this library.
 
-=== Known Issues
+=== FEATURES/PROBLEMS:
+
 I've tried to assemble a reasonably extensive (although I won't claim
 exhaustive) unit test for the library. Despite that, this is an early release of
 the code and I'm sure there will be issues with it given the complexity inherent
@@ -52,7 +58,7 @@ in RTF. The following are issues that I'm already aware of with the library...
   implementation. Still, I think I should mention the point that I don't get
   consistent appearance across all of the RTF viewers I've tried.
 
-=== To Do
+=== To do
 This section details that areas where I feel the library is currently lacking
 or incomplete. I hope to address the things detailed here in later releases of
 the code.
@@ -182,8 +188,9 @@ looking at this documentation). Another source of information is the examples
 directory, so check that out too.
 
 CONTRIBUTORS
-Claudio Bustos
-Chris O'Sullivan
+* Marcello Barnaba
+* Claudio Bustos
+* Chris O'Sullivan
 
 COPYRIGHT
 =========
