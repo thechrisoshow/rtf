@@ -1,3 +1,7 @@
+*~
+.gitignore
+pkg
+*.rtf
 *.sw?
 .DS_Store
 coverage
