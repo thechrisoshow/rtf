@@ -187,12 +187,13 @@ is installed with the library gem (if you're reading this you may already be
 looking at this documentation). Another source of information is the examples
 directory, so check that out too.
 
-CONTRIBUTORS
+== CONTRIBUTORS
+
 * Marcello Barnaba
 * Claudio Bustos
 * Chris O'Sullivan
 
-COPYRIGHT
-=========
+== COPYRIGHT
+
 
 Copyright (c) 2009-2010 Peter Wood. See LICENSE for details.

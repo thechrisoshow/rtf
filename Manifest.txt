@@ -1,8 +1,7 @@
-CHANGES
 History.txt
-LICENSE
 LICENSE.txt
-README.rdoc
+Manifest.txt
+README.txt
 Rakefile
 VERSION.yml
 examples/example01.rb
