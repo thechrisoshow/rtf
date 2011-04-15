@@ -1,4 +1,4 @@
-require File.dirname(__FILE__) + '/test_helper'
+require 'test_helper'
 
 # Information class unit test class.
 class StyleTest < Test::Unit::TestCase

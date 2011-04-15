@@ -177,8 +177,8 @@ looking at this documentation). Another source of information is the examples
 directory, so check that out too.
 
 CONTRIBUTORS
-Claudio Bustos
-Chris O'Sullivan
+  Claudio Bustos
+  Chris O'Sullivan
 
 COPYRIGHT
 =========
