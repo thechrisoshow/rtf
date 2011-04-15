@@ -3,11 +3,10 @@ require 'rake'
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |s|
-    s.rubyforge_project = "ruby-statsample"
-    s.name = "clbustos-rtf"
+    s.name = "rtf"
     s.summary = 'Ruby library to create rich text format documents.'
-    s.email = "clbustos@gmail.com"
-    s.homepage = "http://github.com/clbustos/rtf"
+    s.email = "paw220470@yahoo.ie"
+    s.homepage = "http://github.com/thechrisoshow/rtf"
     s.description = 'Ruby RTF is a library that can be used to create '\
                     'rich text format (RTF) documents. RTF is a text '\
                     'based standard for laying out document content.'
@@ -15,7 +14,7 @@ begin
     s.files = FileList["[A-Z]*", "{examples,lib,test}/**/*"]
   end
 rescue LoadError
-  puts "Jeweler not available. Install it with: sudo gem install jeweler"
+  puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
 end
 
 require 'rake/rdoctask'
@@ -42,7 +41,7 @@ begin
     t.verbose = true
   end
 rescue LoadError
-  puts "RCov is not available. In order to run rcov, you must: sudo gem install spicycode-rcov"
+  puts "RCov is not available. In order to run rcov, you must: sudo gem install rcov"
 end
 
 task :default => :test
