@@ -12,7 +12,8 @@ begin
     s.description = 'Ruby RTF is a library that can be used to create '\
                     'rich text format (RTF) documents. RTF is a text '\
                     'based standard for laying out document content.'
-    s.authors = ["Peter Wood"]
+
+    s.authors = ["Peter Wood", "Claudio Bustos", "Marcello Barnaba"]
     s.files = FileList["[A-Z]*", "{examples,lib,test}/**/*"]
   end
 rescue LoadError

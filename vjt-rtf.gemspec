@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.version = "0.4.2"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
-  s.authors = ["Peter Wood"]
+  s.authors = ["Peter Wood", "Claudio Bustos", "Marcello Barnaba"]
   s.date = %q{2011-06-08}
   s.description = %q{Ruby RTF is a library that can be used to create rich text format (RTF) documents. RTF is a text based standard for laying out document content.}
   s.email = %q{vjt@openssl.it}
