@@ -5,10 +5,10 @@ begin
   require 'jeweler'
   Jeweler::Tasks.new do |s|
     s.rubyforge_project = "ruby-statsample"
-    s.name = "vjt-rtf"
+    s.name = "ifad-rtf"
     s.summary = 'Ruby library to create rich text format documents.'
-    s.email = "vjt@openssl.it"
-    s.homepage = "http://github.com/vjt/rtf"
+    s.email = "m.barnaba@ifad.org"
+    s.homepage = "http://github.com/ifad/rtf"
     s.description = 'Ruby RTF is a library that can be used to create '\
                     'rich text format (RTF) documents. RTF is a text '\
                     'based standard for laying out document content.'
