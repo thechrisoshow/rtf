@@ -32,6 +32,8 @@ Gem::Specification.new do |s|
     "examples/rubyrtf.png",
     "lib/rtf.rb",
     "lib/rtf/colour.rb",
+    "lib/rtf/converters.rb",
+    "lib/rtf/converters/html.rb",
     "lib/rtf/font.rb",
     "lib/rtf/information.rb",
     "lib/rtf/list.rb",
