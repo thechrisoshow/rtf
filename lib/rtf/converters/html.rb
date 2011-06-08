@@ -6,7 +6,6 @@ module RTF::Converters
 
     def initialize(html, options = {})
       html  = options[:noclean] ? html : clean(html, options[:tidy_options] || {})
-      puts html
       @html = Nokogiri::HTML::Document.parse(html)
     end
 
