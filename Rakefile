@@ -15,6 +15,8 @@ begin
 
     s.authors = ["Peter Wood", "Claudio Bustos", "Marcello Barnaba"]
     s.files = FileList["[A-Z]*", "{examples,lib,test}/**/*"]
+
+    s.add_dependency 'nokogiri', '~> 1.1'
   end
 rescue LoadError
   puts "Jeweler not available. Install it with: sudo gem install jeweler"
