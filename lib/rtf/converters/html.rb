@@ -1,86 +1,97 @@
-require 'rtf'
 require 'nokogiri'
 
-module PM
-  module RTF
-    extend self
+module RTF::Converters
+  class HTML
 
-    def from_html(html)
-      html = ::Nokogiri::HTML::Document.parse(html)
-      html.css('body').children.to_rtf
+    def initialize(html)
+      @html = Nokogiri::HTML::Document.parse(html)
     end
 
-    def new(font = :default)
-      ::RTF::Document.new font(font)
+    def to_rtf
+      to_rtf_document.to_rtf
     end
 
-    def font(key)
-      ::RTF::Font.new(*case key
-        when :default   then [::RTF::Font::ROMAN,  'Times New Roman']
-        when :monospace then [::RTF::Font::MODERN, 'Courier New'    ]
-      end)
-    end
+    def to_rtf_document(options = {})
+      font  = Helpers.font(options[:font] || :default)
+      nodes = NodeSet.new @html.css('body')
 
-    def style(key)
-      ::RTF::CharacterStyle.new.tap do |style|
-        case key.to_sym
-        when :h1
-          style.font_size = 46
-          style.bold = true
-        when :h2
-          style.font_size = 38
-          style.bold = true
-        when :h3
-          style.font_size = 28
-          style.bold = true
-        end
+      RTF::Document.new(font).tap do |rtf|
+        nodes.to_rtf(rtf)
       end
     end
 
-    module Nokogiri
-      module NodeSet
-        def to_rtf(rtf = nil)
-          (rtf || PM::RTF.new).tap do |rtf|
-            each {|node| node.to_rtf(rtf)}
+    module Helpers
+      extend self
+
+      def font(key)
+        RTF::Font.new(*case key
+          when :default   then [RTF::Font::ROMAN,  'Times New Roman']
+          when :monospace then [RTF::Font::MODERN, 'Courier New'    ]
+        end)
+      end
+
+      def style(key)
+        RTF::CharacterStyle.new.tap do |style|
+          case key.to_sym
+          when :h1
+            style.font_size = 46
+            style.bold = true
+          when :h2
+            style.font_size = 38
+            style.bold = true
+          when :h3
+            style.font_size = 28
+            style.bold = true
           end
         end
       end
+    end
 
-      module Node
+    class NodeSet
+      def initialize(nodeset)
+        @nodeset = nodeset
+      end
+
+      def to_rtf(rtf)
+        @nodeset.children.each do |node|
+          Node.new(node).to_rtf(rtf)
+        end
+      end
+    end
+
+    class Node # :nodoc:
+      def initialize(node)
+        @node = node
+      end
+
         def to_rtf(rtf)
-          #puts "handling #{to_html}"
-
-          case name
-          when 'text'                   then rtf << text
+          case @node.name
+          when 'text'                   then rtf << @node.text
           when 'br'                     then rtf.line_break
           when 'b', 'strong'            then rtf.bold &recurse
           when 'i', 'em', 'cite'        then rtf.italic &recurse
           when 'u'                      then rtf.underline &recurse
           when 'blockquote', 'p', 'div' then rtf.paragraph &recurse
+          when 'span'                   then recurse.call(rtf)
           when 'sup'                    then rtf.subscript &recurse
           when 'sub'                    then rtf.superscript &recurse
           when 'ul'                     then rtf.list :bullets, &recurse
           when 'ol'                     then rtf.list :decimal, &recurse
           when 'li'                     then rtf.item &recurse
-          when 'a'                      then rtf.link self[:href], &recurse
-          when 'h1', 'h2', 'h3'         then rtf.apply(PM::RTF.style(name), &recurse); rtf.line_break
-          when 'code'                   then rtf.font PM::RTF.font(:monospace), &recurse
+          when 'a'                      then rtf.link @node[:href], &recurse
+          when 'h1', 'h2', 'h3'         then rtf.apply(Helpers.style(@node.name), &recurse); rtf.line_break
+          when 'code'                   then rtf.font Helpers.font(:monospace), &recurse
           else
-            #puts "Ignoring #{to_html}"
+            #puts "Ignoring #{@node.to_html}"
           end
 
           return rtf
         end
 
         def recurse
-          #puts "recursing on #{children.to_html}"
-          lambda {|rtf| children.to_rtf(rtf)}
+          lambda {|rtf| NodeSet.new(@node.children).to_rtf(rtf)}
         end
-      end
     end
 
   end
 end
-
-Nokogiri::XML::NodeSet.instance_eval { include PM::RTF::Nokogiri::NodeSet }
-Nokogiri::XML::Node.instance_eval    { include PM::RTF::Nokogiri::Node    }
