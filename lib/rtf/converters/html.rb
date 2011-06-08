@@ -66,7 +66,7 @@ module RTF::Converters
 
       def to_rtf(rtf)
         case @node.name
-        when 'text'                   then rtf << @node.text
+        when 'text'                   then rtf << @node.text.gsub(/\n/, ' ')
         when 'br'                     then rtf.line_break
         when 'b', 'strong'            then rtf.bold &recurse
         when 'i', 'em', 'cite'        then rtf.italic &recurse
