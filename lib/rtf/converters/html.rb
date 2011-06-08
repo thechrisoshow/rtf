@@ -64,33 +64,33 @@ module RTF::Converters
         @node = node
       end
 
-        def to_rtf(rtf)
-          case @node.name
-          when 'text'                   then rtf << @node.text
-          when 'br'                     then rtf.line_break
-          when 'b', 'strong'            then rtf.bold &recurse
-          when 'i', 'em', 'cite'        then rtf.italic &recurse
-          when 'u'                      then rtf.underline &recurse
-          when 'blockquote', 'p', 'div' then rtf.paragraph &recurse
-          when 'span'                   then recurse.call(rtf)
-          when 'sup'                    then rtf.subscript &recurse
-          when 'sub'                    then rtf.superscript &recurse
-          when 'ul'                     then rtf.list :bullets, &recurse
-          when 'ol'                     then rtf.list :decimal, &recurse
-          when 'li'                     then rtf.item &recurse
-          when 'a'                      then rtf.link @node[:href], &recurse
-          when 'h1', 'h2', 'h3'         then rtf.apply(Helpers.style(@node.name), &recurse); rtf.line_break
-          when 'code'                   then rtf.font Helpers.font(:monospace), &recurse
-          else
-            #puts "Ignoring #{@node.to_html}"
-          end
-
-          return rtf
+      def to_rtf(rtf)
+        case @node.name
+        when 'text'                   then rtf << @node.text
+        when 'br'                     then rtf.line_break
+        when 'b', 'strong'            then rtf.bold &recurse
+        when 'i', 'em', 'cite'        then rtf.italic &recurse
+        when 'u'                      then rtf.underline &recurse
+        when 'blockquote', 'p', 'div' then rtf.paragraph &recurse
+        when 'span'                   then recurse.call(rtf)
+        when 'sup'                    then rtf.subscript &recurse
+        when 'sub'                    then rtf.superscript &recurse
+        when 'ul'                     then rtf.list :bullets, &recurse
+        when 'ol'                     then rtf.list :decimal, &recurse
+        when 'li'                     then rtf.item &recurse
+        when 'a'                      then rtf.link @node[:href], &recurse
+        when 'h1', 'h2', 'h3'         then rtf.apply(Helpers.style(@node.name), &recurse); rtf.line_break
+        when 'code'                   then rtf.font Helpers.font(:monospace), &recurse
+        else
+          #puts "Ignoring #{@node.to_html}"
         end
 
-        def recurse
-          lambda {|rtf| NodeSet.new(@node.children).to_rtf(rtf)}
-        end
+        return rtf
+      end
+
+      def recurse
+        lambda {|rtf| NodeSet.new(@node.children).to_rtf(rtf)}
+      end
     end
 
   end
