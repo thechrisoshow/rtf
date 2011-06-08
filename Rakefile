@@ -17,6 +17,7 @@ begin
     s.files = FileList["[A-Z]*", "{examples,lib,test}/**/*"]
 
     s.add_dependency 'nokogiri', '~> 1.1'
+    s.add_dependency 'tidy-ext', '~> 0.1'
   end
 rescue LoadError
   puts "Jeweler not available. Install it with: sudo gem install jeweler"

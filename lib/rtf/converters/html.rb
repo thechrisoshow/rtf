@@ -1,14 +1,17 @@
 require 'nokogiri'
+require 'tidy'
 
 module RTF::Converters
   class HTML
 
-    def initialize(html)
+    def initialize(html, options = {})
+      html  = options[:noclean] ? html : clean(html, options[:tidy_options] || {})
+      puts html
       @html = Nokogiri::HTML::Document.parse(html)
     end
 
-    def to_rtf
-      to_rtf_document.to_rtf
+    def to_rtf(options = {})
+      to_rtf_document(options).to_rtf
     end
 
     def to_rtf_document(options = {})
@@ -19,6 +22,27 @@ module RTF::Converters
         nodes.to_rtf(rtf)
       end
     end
+
+    protected
+      def clean(html, options = {})
+        defaults = {
+          :doctype          => 'omit',
+          :bare             => true,
+          :clean            => true,
+          :drop_empty_paras => true,
+          :logical_emphasis => true,
+          :lower_literals   => true,
+          :merge_spans      => 1,
+          :merge_divs       => 1,
+          :output_html      => true,
+          :indent           => 0,
+          :wrap             => 0,
+          :char_encoding    => 'utf8'
+        }
+
+        tidy = Tidy.new defaults.merge(options)
+        tidy.clean(html)
+      end
 
     module Helpers
       extend self
