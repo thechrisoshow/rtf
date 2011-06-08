@@ -13,7 +13,7 @@ module RTF::Converters
 
     def to_rtf_document(options = {})
       font  = Helpers.font(options[:font] || :default)
-      nodes = NodeSet.new @html.css('body')
+      nodes = NodeSet.new @html.css('body').children
 
       RTF::Document.new(font).tap do |rtf|
         nodes.to_rtf(rtf)
@@ -53,7 +53,7 @@ module RTF::Converters
       end
 
       def to_rtf(rtf)
-        @nodeset.children.each do |node|
+        @nodeset.each do |node|
           Node.new(node).to_rtf(rtf)
         end
       end
