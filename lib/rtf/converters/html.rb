@@ -57,10 +57,10 @@ module RTF::Converters
         RTF::CharacterStyle.new.tap do |style|
           case key.to_sym
           when :h1
-            style.font_size = 46
+            style.font_size = 44
             style.bold = true
           when :h2
-            style.font_size = 38
+            style.font_size = 36
             style.bold = true
           when :h3
             style.font_size = 28
