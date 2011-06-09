@@ -65,6 +65,9 @@ module RTF::Converters
           when :h3
             style.font_size = 28
             style.bold = true
+          when :h4
+            style.font_size = 22
+            style.bold = true
           end
         end
       end
@@ -102,7 +105,7 @@ module RTF::Converters
         when 'ol'                     then rtf.list :decimal, &recurse
         when 'li'                     then rtf.item &recurse
         when 'a'                      then rtf.link @node[:href], &recurse
-        when 'h1', 'h2', 'h3'         then rtf.apply(Helpers.style(@node.name), &recurse); rtf.line_break
+        when 'h1', 'h2', 'h3', 'h4'   then rtf.apply(Helpers.style(@node.name), &recurse); rtf.line_break
         when 'code'                   then rtf.font Helpers.font(:monospace), &recurse
         else
           #puts "Ignoring #{@node.to_html}"
