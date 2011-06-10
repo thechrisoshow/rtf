@@ -1182,32 +1182,39 @@ module RTF
 
       # This method generates the RTF for an ImageNode object.
       def to_rtf
-         text  = StringIO.new
-         count = 0
+        text  = StringIO.new
+        count = 0
+  
+        #text << '{\pard{\*\shppict{\pict'
+        text << '{\*\shppict{\pict'
+        text << "\\picscalex#{@x_scaling}" if @x_scaling != nil
+        text << "\\picscaley#{@y_scaling}" if @y_scaling != nil
+        text << "\\piccropl#{@left_crop}" if @left
+        text << "\\piccropr#{@right_crop}" if @right_crop != nil
+        text << "\\piccropt#{@top_crop}" if @top_crop != nil
+        text << "\\piccropb#{@bottom_crop}" if @bottom_crop != nil
+        text << "\\picw#{@width}\\pich#{@height}\\bliptag#{@id}"
+        text << "\\#{@type.id2name}\n"
+  
+        starting_pos = @source.pos
+        @source.rewind
+        @source.each_byte do |byte|
+          hex_str = byte.to_s(16)
+          hex_str.insert(0,'0') if hex_str.length == 1
+          text << hex_str
+  
+          count += 1
+          if count == 40
+            text << "\n"
+            count = 0
+          end
+        end
+        @source.pos = starting_pos
+  
+        #text << "\n}}\\par}"
+        text << "\n}}"
 
-         #text << '{\pard{\*\shppict{\pict'
-         text << '{\*\shppict{\pict'
-         text << "\\picscalex#{@x_scaling}" if @x_scaling != nil
-         text << "\\picscaley#{@y_scaling}" if @y_scaling != nil
-         text << "\\piccropl#{@left_crop}" if @left_crop != nil
-         text << "\\piccropr#{@right_crop}" if @right_crop != nil
-         text << "\\piccropt#{@top_crop}" if @top_crop != nil
-         text << "\\piccropb#{@bottom_crop}" if @bottom_crop != nil
-         text << "\\picw#{@width}\\pich#{@height}\\bliptag#{@id}"
-         text << "\\#{@type.id2name}\n"
-         @source.each_byte {|byte| @read << byte} if @source.eof? == false
-         @read.each do |byte|
-            text << ("%02x" % byte)
-            count += 1
-            if count == 40
-               text << "\n"
-               count = 0
-            end
-         end
-         #text << "\n}}\\par}"
-         text << "\n}}"
-
-         text.string
+        text.string
       end
 
       # This method is used to determine the underlying endianness of a
