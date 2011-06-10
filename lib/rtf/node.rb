@@ -1092,6 +1092,13 @@ module RTF
       # A definition for an architecture endian constant.
       BIG_ENDIAN                                 = :big
 
+      # Offsets for reading dimension data by filetype
+      DIMENSIONS_OFFSET = {
+        JPEG   => 2,
+        PNG    => 8,
+        BITMAP => 8,
+      }.freeze
+
       # Attribute accessor.
       attr_reader :x_scaling, :y_scaling, :top_crop, :right_crop, :bottom_crop,
                   :left_crop, :width, :height
@@ -1135,13 +1142,13 @@ module RTF
             RTFError.fire("Access to the #{File.basename(@source)} file denied.")
          end
 
-         @type, len_read = get_file_type
+         @type = get_file_type
          if @type == nil
             RTFError.fire("The #{File.basename(@source)} file contains an "\
                           "unknown or unsupported image type.")
          end
 
-         @width, @height = get_dimensions(len_read)
+         @width, @height = get_dimensions
       end
 
       def open_file
@@ -1175,7 +1182,7 @@ module RTF
 
          file.close
 
-         [type, read.length]
+         type
       end
 
       # This method generates the RTF for an ImageNode object.
@@ -1278,10 +1285,10 @@ module RTF
 
 
       # This method fetches details of the dimensions associated with an image.
-      def get_dimensions(dimension_offset)
+      def get_dimensions
          dimensions = nil
          file = self.open_file
-         file.pos = dimension_offset
+         file.pos = DIMENSIONS_OFFSET[@type]
          read = []
 
          # Check the image type.
