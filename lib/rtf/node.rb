@@ -1151,8 +1151,12 @@ module RTF
          @width, @height = get_dimensions
       end
 
-      def open_file
-        File.new(@source, 'rb')
+      def open_file(&block)
+        if block
+          File.open(@source, 'rb', &block)
+        else
+          File.open(@source, 'rb')
+        end
       end
 
       # This method attempts to determine the image type associated with a
@@ -1160,27 +1164,27 @@ module RTF
       def get_file_type
          type = nil
          read = []
-         file = open_file
+         open_file do |file|
 
-         # Check if the file is a JPEG.
-         read_source(file, read, 2)
-         if read[0,2] == [255, 216]
-            type = JPEG
-         else
-            # Check if it's a PNG.
-            read_source(file, read, 6)
-            if read[0,8] == [137, 80, 78, 71, 13, 10, 26, 10]
-               type = PNG
-            else
-               # Check if its a bitmap.
-               if read[0,2] == [66, 77]
-                  size = to_integer(read[2,4])
-                  type = BITMAP if size == File.size(@source)
-               end
-            end
+           # Check if the file is a JPEG.
+           read_source(file, read, 2)
+           if read[0,2] == [255, 216]
+              type = JPEG
+           else
+              # Check if it's a PNG.
+              read_source(file, read, 6)
+              if read[0,8] == [137, 80, 78, 71, 13, 10, 26, 10]
+                 type = PNG
+              else
+                 # Check if its a bitmap.
+                 if read[0,2] == [66, 77]
+                    size = to_integer(read[2,4])
+                    type = BITMAP if size == File.size(@source)
+                 end
+              end
+           end
+
          end
-
-         file.close
 
          type
       end
@@ -1201,20 +1205,19 @@ module RTF
         text << "\\picw#{@width}\\pich#{@height}\\bliptag#{@id}"
         text << "\\#{@type.id2name}\n"
   
-        file = self.open_file
-        file.each_byte do |byte|
-          hex_str = byte.to_s(16)
-          hex_str.insert(0,'0') if hex_str.length == 1
-          text << hex_str
-  
-          count += 1
-          if count == 40
-            text << "\n"
-            count = 0
+        open_file do |file|
+          file.each_byte do |byte|
+            hex_str = byte.to_s(16)
+            hex_str.insert(0,'0') if hex_str.length == 1
+            text << hex_str
+    
+            count += 1
+            if count == 40
+              text << "\n"
+              count = 0
+            end
           end
         end
-        file.close
-  
         #text << "\n}}\\par}"
         text << "\n}}"
 
@@ -1287,45 +1290,46 @@ module RTF
       # This method fetches details of the dimensions associated with an image.
       def get_dimensions
          dimensions = nil
-         file = self.open_file
-         file.pos = DIMENSIONS_OFFSET[@type]
-         read = []
 
-         # Check the image type.
-         if @type == JPEG
-            # Read until we can't anymore or we've found what we're looking for.
-            done = false
-            while file.eof? == false && done == false
-               # Read to the next marker.
-               read_source(file,read) {|c| c == 0xff} # Read to the marker.
-               read_source(file,read) {|c| c != 0xff} # Skip any padding.
+         open_file do |file|
+           file.pos = DIMENSIONS_OFFSET[@type]
+           read = []
 
-               if read[-1] >= 0xc0 && read[-1] <= 0xc3
-                  # Read in the width and height details.
-                  read_source(file, read, 7)
-                  dimensions = read[-4,4].pack('C4').unpack('nn').reverse
-                  done       = true
-               else
-                  # Skip the marker block.
-                  read_source(file, read, 2)
-                  read_source(file, read, read[-2,2].pack('C2').unpack('n')[0] - 2)
-               end
-            end
-         elsif @type == PNG
-            # Read in the data to contain the width and height.
-            read_source(file, read, 16)
-            dimensions = read[-8,8].pack('C8').unpack('N2')
-         elsif @type == BITMAP
-            # Read in the data to contain the width and height.
-            read_source(file, read, 18)
-            dimensions = [to_integer(read[-8,4]), to_integer(read[-4,4])]
+           # Check the image type.
+           if @type == JPEG
+              # Read until we can't anymore or we've found what we're looking for.
+              done = false
+              while file.eof? == false && done == false
+                 # Read to the next marker.
+                 read_source(file,read) {|c| c == 0xff} # Read to the marker.
+                 read_source(file,read) {|c| c != 0xff} # Skip any padding.
+
+                 if read[-1] >= 0xc0 && read[-1] <= 0xc3
+                    # Read in the width and height details.
+                    read_source(file, read, 7)
+                    dimensions = read[-4,4].pack('C4').unpack('nn').reverse
+                    done       = true
+                 else
+                    # Skip the marker block.
+                    read_source(file, read, 2)
+                    read_source(file, read, read[-2,2].pack('C2').unpack('n')[0] - 2)
+                 end
+              end
+           elsif @type == PNG
+              # Read in the data to contain the width and height.
+              read_source(file, read, 16)
+              dimensions = read[-8,8].pack('C8').unpack('N2')
+           elsif @type == BITMAP
+              # Read in the data to contain the width and height.
+              read_source(file, read, 18)
+              dimensions = [to_integer(read[-8,4]), to_integer(read[-4,4])]
+           end
          end
 
          dimensions
       end
 
-      private :get_file_type, :to_integer, :get_endian,
-              :get_dimensions
+      private :get_file_type, :to_integer, :get_endian, :get_dimensions, :open_file
    end # End of the ImageNode class.
 
 
