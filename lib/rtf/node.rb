@@ -1131,7 +1131,7 @@ module RTF
          @width = @height = nil
 
          # store path to image
-         @source = source if source.instance_of?(String)
+         @source = source if source.instance_of?(String) || source.instance_of?(Tempfile)
          @source = source.path if source.instance_of?(File)
 
          # Check the file's existence and accessibility.
