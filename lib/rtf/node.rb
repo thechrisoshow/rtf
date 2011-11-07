@@ -657,7 +657,7 @@ module RTF
             text << row.to_rtf
          end
 
-         text.string
+         text.string.sub(/\\row(?!.*\\row)/m, "\\lastrow\n\\row")
       end
 
       alias :column_shading_color :column_shading_colour
