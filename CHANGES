@@ -1,5 +1,8 @@
 == CHANGES
 
+0.3.4
+  * Added table fix for IOS [samullen]
+
 0.3.2
   * Added support for utf-8 thanks to clbustos
 
