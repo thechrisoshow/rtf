@@ -40,6 +40,12 @@ class ImageNodeTest < Test::Unit::TestCase
 
       image.left_crop = 50
       assert(image.left_crop == 50)
+
+      image.displayed_width = 5000
+      assert(image.displayed_width == 5000)
+
+      image.displayed_height = 9000
+      assert(image.displayed_height == 9000)
    end
 
    def test_image_reading
@@ -73,10 +79,13 @@ class ImageNodeTest < Test::Unit::TestCase
       image.right_crop  = 15
       image.left_crop   = 20
       image.bottom_crop = 25
+      image.displayed_width = 5000
+      image.displayed_height = 9000
       rtf               = image.to_rtf
 
       assert(rtf == "{\\*\\shppict{\\pict\\picscalex100\\picscaley75"\
                     "\\piccropl20\\piccropr15\\piccropt10\\piccropb25"\
+                    "\\picwgoal5000\\pichgoal9000"\
                     "\\picw20\\pich20\\bliptag1\\pngblip\n"\
                     "89504e470d0a1a0a0000000d494844520000001400000014080200000002eb8a5a00000001735247\n"\
                     "4200aece1ce90000000467414d410000b18f0bfc6105000000206348524d00007a26000080840000\n"\
