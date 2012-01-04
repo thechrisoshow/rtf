@@ -58,8 +58,6 @@ you are already familiar with the Ruby language. So, for a start, consider...
    require 'rubygems'
    require 'rtf'
 
-   include RTF
-
 The first thing to look at here at the are the first two lines. The RTF library
 is provided as a Ruby gem and these two lines load the libraries functionality
 into the script. The third line of code includes the RTF module into the current
@@ -67,7 +65,7 @@ name space. This is a convenience mechanism that saves on specifically having
 to refer to the module when accessing the RTF library. Next we want to create
 an RTF document and that is done like this...
 
-   document = Document.new(Font.new(Font::ROMAN, 'Times New Roman'))
+   document = RTF::Document.new(RTF::Font.new(RTF::Font::ROMAN, 'Times New Roman'))
 
 This line of code creates a new Document object, specifying that the default
 font for the document will the the Times New Roman font. So we have a document,
@@ -168,7 +166,7 @@ actually quite straight forward. As was mentioned previously, RTF is a text
 based standard so you simply generate the RTF and write it to a file. Heres an
 example...
 
-   File.open('my_document.rtf') {|file| file.write(document.to_rtf)}
+   File.open('my_document.rtf', 'w') {|file| file.write(document.to_rtf)} # existing file by this name will be overwritten
 
 There you have it. You've been given a quick overview of the basics of using
 the library. For more information consult the HTML based API documentation that
