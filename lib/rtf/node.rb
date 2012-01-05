@@ -1268,6 +1268,13 @@ module RTF
       # A definition for an architecture endian constant.
       BIG_ENDIAN                                 = :big
 
+      # Offsets for reading dimension data by filetype
+      DIMENSIONS_OFFSET = {
+        JPEG   => 2,
+        PNG    => 8,
+        BITMAP => 8,
+      }.freeze
+
       # Attribute accessor.
       attr_reader :x_scaling, :y_scaling, :top_crop, :right_crop, :bottom_crop,
                   :left_crop, :width, :height
@@ -1294,63 +1301,65 @@ module RTF
          super(parent)
          @source = nil
          @id     = id
-         @read   = []
          @type   = nil
          @x_scaling = @y_scaling = nil
          @top_crop = @right_crop = @bottom_crop = @left_crop = nil
          @width = @height = nil
 
-         # Check what we were given.
-         src = source
-         src.binmode if src.instance_of?(File)
-         src = File.new(source, 'rb') if source.instance_of?(String)
-         if src.instance_of?(File)
-            # Check the files existence and accessibility.
-            if !File.exist?(src.path)
-               RTFError.fire("Unable to find the #{File.basename(source)} file.")
-            end
-            if !File.readable?(src.path)
-               RTFError.fire("Access to the #{File.basename(source)} file denied.")
-            end
-            @source = src
-         else
-            RTFError.fire("Unrecognised source specified for ImageNode.")
+         # store path to image
+         @source = source if source.instance_of?(String) || source.instance_of?(Tempfile)
+         @source = source.path if source.instance_of?(File)
+
+         # Check the file's existence and accessibility.
+         if !File.exist?(@source)
+            RTFError.fire("Unable to find the #{File.basename(@source)} file.")
+         end
+         if !File.readable?(@source)
+            RTFError.fire("Access to the #{File.basename(@source)} file denied.")
          end
 
-         @type = get_file_type(src)
+         @type = get_file_type
          if @type == nil
-            RTFError.fire("The #{File.basename(source)} file contains an "\
+            RTFError.fire("The #{File.basename(@source)} file contains an "\
                           "unknown or unsupported image type.")
          end
 
          @width, @height = get_dimensions
       end
 
+      def open_file(&block)
+        if block
+          File.open(@source, 'rb', &block)
+        else
+          File.open(@source, 'rb')
+        end
+      end
+
       # This method attempts to determine the image type associated with a
       # file, returning nil if it fails to make the determination.
-      #
-      # ==== Parameters
-      # file::  A reference to the file to check for image type.
-      def get_file_type(file)
+      def get_file_type
          type = nil
+         read = []
+         open_file do |file|
 
-         # Check if the file is a JPEG.
-         read_source(2)
+           # Check if the file is a JPEG.
+           read_source(file, read, 2)
+           if read[0,2] == [255, 216]
+              type = JPEG
+           else
+              # Check if it's a PNG.
+              read_source(file, read, 6)
+              if read[0,8] == [137, 80, 78, 71, 13, 10, 26, 10]
+                 type = PNG
+              else
+                 # Check if its a bitmap.
+                 if read[0,2] == [66, 77]
+                    size = to_integer(read[2,4])
+                    type = BITMAP if size == File.size(@source)
+                 end
+              end
+           end
 
-         if @read[0,2] == [255, 216]
-            type = JPEG
-         else
-            # Check if it's a PNG.
-            read_source(6)
-            if @read[0,8] == [137, 80, 78, 71, 13, 10, 26, 10]
-               type = PNG
-            else
-               # Check if its a bitmap.
-               if @read[0,2] == [66, 77]
-                  size = to_integer(@read[2,4])
-                  type = BITMAP if size == File.size(file.path)
-               end
-            end
          end
 
          type
@@ -1358,32 +1367,37 @@ module RTF
 
       # This method generates the RTF for an ImageNode object.
       def to_rtf
-         text  = StringIO.new
-         count = 0
-
-         #text << '{\pard{\*\shppict{\pict'
-         text << '{\*\shppict{\pict'
-         text << "\\picscalex#{@x_scaling}" if @x_scaling != nil
-         text << "\\picscaley#{@y_scaling}" if @y_scaling != nil
-         text << "\\piccropl#{@left_crop}" if @left_crop != nil
-         text << "\\piccropr#{@right_crop}" if @right_crop != nil
-         text << "\\piccropt#{@top_crop}" if @top_crop != nil
-         text << "\\piccropb#{@bottom_crop}" if @bottom_crop != nil
-         text << "\\picw#{@width}\\pich#{@height}\\bliptag#{@id}"
-         text << "\\#{@type.id2name}\n"
-         @source.each_byte {|byte| @read << byte} if @source.eof? == false
-         @read.each do |byte|
-            text << ("%02x" % byte)
+        text  = StringIO.new
+        count = 0
+  
+        #text << '{\pard{\*\shppict{\pict'
+        text << '{\*\shppict{\pict'
+        text << "\\picscalex#{@x_scaling}" if @x_scaling != nil
+        text << "\\picscaley#{@y_scaling}" if @y_scaling != nil
+        text << "\\piccropl#{@left_crop}" if @left_crop != nil
+        text << "\\piccropr#{@right_crop}" if @right_crop != nil
+        text << "\\piccropt#{@top_crop}" if @top_crop != nil
+        text << "\\piccropb#{@bottom_crop}" if @bottom_crop != nil
+        text << "\\picw#{@width}\\pich#{@height}\\bliptag#{@id}"
+        text << "\\#{@type.id2name}\n"
+  
+        open_file do |file|
+          file.each_byte do |byte|
+            hex_str = byte.to_s(16)
+            hex_str.insert(0,'0') if hex_str.length == 1
+            text << hex_str
+    
             count += 1
             if count == 40
-               text << "\n"
-               count = 0
+              text << "\n"
+              count = 0
             end
-         end
-         #text << "\n}}\\par}"
-         text << "\n}}"
+          end
+        end
+        #text << "\n}}\\par}"
+        text << "\n}}"
 
-         text.string
+        text.string
       end
 
       # This method is used to determine the underlying endianness of a
@@ -1425,69 +1439,73 @@ module RTF
       # size::  The maximum number of bytes to be read from the file. Defaults
       #         to nil to indicate that the remainder of the file should be read
       #         in.
-      def read_source(size=nil)
+      def read_source(file, read, size=nil)
          if block_given?
             done = false
 
-            while done == false && @source.eof? == false
-              @read << @source.getbyte
-               done = yield @read[-1]
+            while done == false && file.eof? == false
+              read << file.getbyte
+               done = yield read[-1]
             end
          else
             if size != nil
                if size > 0
                   total = 0
-                  while @source.eof? == false && total < size
-
-                     @read << @source.getbyte
+                  while file.eof? == false && total < size
+                     read << file.getbyte
                      total += 1
                   end
                end
             else
-               @source.each_byte {|byte| @read << byte}
+               file.each_byte {|byte| read << byte}
             end
          end
       end
+
 
       # This method fetches details of the dimensions associated with an image.
       def get_dimensions
          dimensions = nil
 
-         # Check the image type.
-         if @type == JPEG
-            # Read until we can't anymore or we've found what we're looking for.
-            done = false
-            while @source.eof? == false && done == false
-               # Read to the next marker.
-               read_source {|c| c == 0xff} # Read to the marker.
-               read_source {|c| c != 0xff} # Skip any padding.
+         open_file do |file|
+           file.pos = DIMENSIONS_OFFSET[@type]
+           read = []
 
-               if @read[-1] >= 0xc0 && @read[-1] <= 0xc3
-                  # Read in the width and height details.
-                  read_source(7)
-                  dimensions = @read[-4,4].pack('C4').unpack('nn').reverse
-                  done       = true
-               else
-                  # Skip the marker block.
-                  read_source(2)
-                  read_source(@read[-2,2].pack('C2').unpack('n')[0] - 2)
-               end
-            end
-         elsif @type == PNG
-            # Read in the data to contain the width and height.
-            read_source(16)
-            dimensions = @read[-8,8].pack('C8').unpack('N2')
-         elsif @type == BITMAP
-            # Read in the data to contain the width and height.
-            read_source(18)
-            dimensions = [to_integer(@read[-8,4]), to_integer(@read[-4,4])]
+           # Check the image type.
+           if @type == JPEG
+              # Read until we can't anymore or we've found what we're looking for.
+              done = false
+              while file.eof? == false && done == false
+                 # Read to the next marker.
+                 read_source(file,read) {|c| c == 0xff} # Read to the marker.
+                 read_source(file,read) {|c| c != 0xff} # Skip any padding.
+
+                 if read[-1] >= 0xc0 && read[-1] <= 0xc3
+                    # Read in the width and height details.
+                    read_source(file, read, 7)
+                    dimensions = read[-4,4].pack('C4').unpack('nn').reverse
+                    done       = true
+                 else
+                    # Skip the marker block.
+                    read_source(file, read, 2)
+                    read_source(file, read, read[-2,2].pack('C2').unpack('n')[0] - 2)
+                 end
+              end
+           elsif @type == PNG
+              # Read in the data to contain the width and height.
+              read_source(file, read, 16)
+              dimensions = read[-8,8].pack('C8').unpack('N2')
+           elsif @type == BITMAP
+              # Read in the data to contain the width and height.
+              read_source(file, read, 18)
+              dimensions = [to_integer(read[-8,4]), to_integer(read[-4,4])]
+           end
          end
 
          dimensions
       end
 
-      private :read_source, :get_file_type, :to_integer, :get_endian,
-              :get_dimensions
+      private :get_file_type, :to_integer, :get_endian, :get_dimensions, :open_file
    end # End of the ImageNode class.
 
 
