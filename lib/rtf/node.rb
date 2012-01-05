@@ -1277,11 +1277,11 @@ module RTF
 
       # Attribute accessor.
       attr_reader :x_scaling, :y_scaling, :top_crop, :right_crop, :bottom_crop,
-                  :left_crop, :width, :height
+                  :left_crop, :width, :height, :displayed_width, :displayed_height
 
       # Attribute mutator.
       attr_writer :x_scaling, :y_scaling, :top_crop, :right_crop, :bottom_crop,
-                  :left_crop
+                  :left_crop, :displayed_width, :displayed_height
 
 
       # This is the constructor for the ImageNode class.
@@ -1305,6 +1305,7 @@ module RTF
          @x_scaling = @y_scaling = nil
          @top_crop = @right_crop = @bottom_crop = @left_crop = nil
          @width = @height = nil
+         @displayed_width = @displayed_height = nil
 
          # store path to image
          @source = source if source.instance_of?(String) || source.instance_of?(Tempfile)
@@ -1378,6 +1379,8 @@ module RTF
         text << "\\piccropr#{@right_crop}" if @right_crop != nil
         text << "\\piccropt#{@top_crop}" if @top_crop != nil
         text << "\\piccropb#{@bottom_crop}" if @bottom_crop != nil
+        text << "\\picwgoal#{@displayed_width}" if @displayed_width != nil
+        text << "\\pichgoal#{@displayed_height}" if @displayed_height != nil        
         text << "\\picw#{@width}\\pich#{@height}\\bliptag#{@id}"
         text << "\\#{@type.id2name}\n"
   
@@ -1385,8 +1388,7 @@ module RTF
           file.each_byte do |byte|
             hex_str = byte.to_s(16)
             hex_str.insert(0,'0') if hex_str.length == 1
-            text << hex_str
-    
+            text << hex_str    
             count += 1
             if count == 40
               text << "\n"
