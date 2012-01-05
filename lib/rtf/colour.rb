@@ -23,15 +23,15 @@ module RTF
       # RTFError::  Generated whenever an invalid intensity setting is
       #             specified for the red, green or blue values.
       def initialize(red, green, blue)
-         if red.kind_of?(Integer) == false || red < 0 || red > 255
+         if !red.kind_of?(Integer) || red < 0 || red > 255
             RTFError.fire("Invalid red intensity setting ('#{red}') specified "\
                           "for a Colour object.")
          end
-         if green.kind_of?(Integer) == false || green < 0 || green > 255
+         if !green.kind_of?(Integer) || green < 0 || green > 255
             RTFError.fire("Invalid green intensity setting ('#{green}') "\
                           "specified for a Colour object.")
          end
-         if blue.kind_of?(Integer) == false || blue < 0 || blue > 255
+         if !blue.kind_of?(Integer) || blue < 0 || blue > 255
             RTFError.fire("Invalid blue intensity setting ('#{blue}') "\
                           "specified for a Colour object.")
          end
@@ -46,9 +46,9 @@ module RTF
       # ==== Parameters
       # object::  A reference to the object to be compared with.
       def ==(object)
-         object.instance_of?(Colour) &&
-         object.red   == @red &&
-         object.green == @green &&
+         object.instance_of?(Colour) and
+         object.red   == @red and
+         object.green == @green and
          object.blue  == @blue
       end
 
@@ -102,7 +102,7 @@ module RTF
       # colour::  The colour to be added to the table.
       def add(colour)
          if colour.instance_of?(Colour)
-            @colours.push(colour) if @colours.index(colour) == nil
+            @colours.push(colour) if @colours.index(colour).nil?
          end
          self
       end
@@ -134,7 +134,7 @@ module RTF
       # colour::  The colour to retrieve the index of.
       def index(colour)
          index = @colours.index(colour)
-         index == nil ? index : index + 1
+         index.nil? ? index : index + 1
       end
 
       # This method generates a textual description for a ColourTable object.

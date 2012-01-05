@@ -108,7 +108,7 @@ module RTF
       #         object or already exists in the table it will be ignored.
       def add(font)
          if font.instance_of?(Font)
-            @fonts.push(font) if @fonts.index(font) == nil
+            @fonts.push(font) if @fonts.index(font).nil?
          end
          self
       end

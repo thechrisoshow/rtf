@@ -1,0 +1,53 @@
+=== 0.5.0 / 2012-01-05
+
+* Added test for utf8. Test load implementation of rtf library on same path first [Claudio Bustos]
+* Cleanup: remove executable bit [Marcello Barnaba]
+* Converters: HTML: add H4 support [Marcello Barnaba]
+* Converters: HTML: add tidy cleaning (and the tidy dependency of course) [Marcello Barnaba]
+* Converters: HTML: carriage returns are not spaces in RTF [Marcello Barnaba]
+* Converters: HTML: fix excess space bug [Marcello Barnaba]
+* Converters: HTML: fixed a traversing bug [Marcello Barnaba]
+* Converters: HTML: imported @panmind source previously published on gist:583061 [Marcello Barnaba]
+* Converters: HTML: reduce headings font sizes - should be parametrized [Marcello Barnaba]
+* Converters: HTML: rewrote without polluting nokogiri [Marcello Barnaba]
+* Converters: HTML: whitespace [Marcello Barnaba]
+* Converters: require them via require "rtf/converters" [Marcello Barnaba]
+* Fix gemspec to reflect correct homepage [Chris O'Sullivan]
+* Fixing rtf files to work with tempfiles opened from s3 [Dan Herrera]
+* Gem: add nokogiri dependency (sucks, I know) [Marcello Barnaba]
+* Gem: changed name and generated gemspec [Marcello Barnaba]
+* Gem: update authors list [Marcello Barnaba]
+* Rename README to have rdoc extension so it looks pretty on github [Chris O'Sullivan]
+* Some pictures are not properly scaled without \picwgoal and \pichgoal [Marcin Urbanski]
+* Update readme to reflect correct copyright [Chris O'Sullivan]
+* Updated CHANGES with new version details [Chris O'Sullivan]
+* Updated README; Use name-spaced class invocations instead of including RTF module; Open file with 'w'I thought adding the 'w' to your `File.open` was a bit  [Jay Hayes]e doing it exactly as you've shown will 
+* Updated test file names [clbustos]
+* add '\lastrow' tag to the lastrow. It's a fix for iOS. [Samuel Mullen]
+* block syntax for ImageNode#open_file [Cygnus]
+* improve speed and memory use of ImageNode#to_rtf [Cygnus]
+* refactor to close and open ImageNode file only when needed [Cygnus]
+* refactor to use a Constant for ImageNode dimensions reading rather than passing values around [Cygnus]
+* usually fail since in all likelihood the user doesn't have an empty file by that name in their current dir. [Jay Hayes]
+
+=== 0.4.2 
+  * Fix bug causing TextNode.to_rtf to return nil under 1.8.7[Jason Langenauer]
+  * Tests run under Ruby 1.9.2 and later [clbustos]
+=== 0.4.1
+  * Links: implemented hyperlinks[Marcello Barnaba]
+  * Lists: add a newline before every new list[Marcello Barnaba]
+=== 0.4.0
+  * Lists: Decimal: quick&dirty implementation of sequential numbering[Marcello Barnaba]
+  * Lists: Decimal: fixed marker name generation: it must contain the dot[Marcello Barnaba]
+  * Lists: removed last StringIO occurrences in new code[Marcello Barnaba]
+  * Lists: wrote minimal object model test[Marcello Barnaba]
+  * Lists: refactored and cleaned up the API a bit[Marcello Barnaba]
+  * Lists: wrote the API bridge between Nodes and Lists[Marcello Barnaba]
+  * Lists: initial implementation of listtable header generation[Marcello Barnaba]
+  * Node: cleaned up the generic to_rtf, added the .wrap option to the constructor[Marcello Barnaba]
+  * Node: stubbed out paragraph generation into a new ParagraphNode[Marcello Barnaba]
+=== 0.3.1
+  * Added the #subscript helper to the CommandNode class [vjt]
+=== 0.3.0
+  * Resolve problems on Ruby 1.9.1 with ImageNode#read_source. Peter uses IO#getc, which returns a String on Ruby 1.9.1, not a Integer, so I replaced with getbyte. [clbustos]
+  * Deleted duplicated definition of ImageNode#style= with attr_writer and def. [clbustos]

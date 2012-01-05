@@ -7,10 +7,12 @@ require 'rtf/style'
 require 'rtf/information'
 require 'rtf/paper'
 require 'rtf/node'
+require 'rtf/list'
 
 # This module encapsulates all the classes and definitions relating to the RTF
 # library.
 module RTF
+  VERSION="0.5.0"
    # This is the exception class used by the RTF library code to indicate
    # errors.
    class RTFError < StandardError

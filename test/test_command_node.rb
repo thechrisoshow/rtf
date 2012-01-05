@@ -1,4 +1,4 @@
-require 'test_helper'
+require File.expand_path(File.dirname(__FILE__)+'/helper_tests')
 
 # Information class unit test class.
 class CommandNodeTest < Test::Unit::TestCase
@@ -40,7 +40,7 @@ class CommandNodeTest < Test::Unit::TestCase
 
       assert(root.paragraph(style) != nil)
       assert(root.size == 1)
-      assert(root[0].class == CommandNode)
+      assert(root[0].class == ParagraphNode)
       assert(root[0].prefix == '\pard\ql')
       assert(root[0].suffix == '\par')
       assert(root.split == true)
@@ -156,6 +156,16 @@ class CommandNodeTest < Test::Unit::TestCase
       assert(node.prefix == '\super')
       assert(node.suffix == nil)
       assert(node == root[-1])
+
+      node = root.subscript
+      assert(node.prefix == '\sub')
+      assert(node.suffix == nil)
+      assert(node == root[-1])
+
+      node = root.strike
+      assert(node.prefix == '\strike')
+      assert(node.suffix == nil)
+      assert(node == root[-1])
    end
 
    # Test text node addition.
@@ -195,6 +205,32 @@ class CommandNodeTest < Test::Unit::TestCase
       assert(table[0][0].width == 100)
       assert(table[0][1].width == 150)
       assert(table[0][2].width == 200)
+   end
+
+   # List object model test
+   def test_list
+      root = Document.new(Font.new(Font::ROMAN, 'Arial'))
+      root.list do |l1|
+        assert l1.class == ListLevelNode
+        assert l1.level == 1
+
+        l1.item do |li|
+          assert li.class == ListTextNode
+          text = li << 'text'
+          assert text.class == TextNode
+          assert text.text == 'text'
+        end
+
+        l1.list do |l2|
+          assert l2.class == ListLevelNode
+          assert l2.level == 2
+          l2.item do |li|
+            text = li << 'text'
+            assert text.class == TextNode
+            assert text.text == 'text'
+          end
+        end
+      end
    end
 
    # This test checks the previous_node and next_node methods that could not be
