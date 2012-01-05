@@ -1,13 +1,10 @@
 doc/*
 *~
-.gitignore
 pkg
 *.rtf
-clbustos-rtf.gemspec
 *.sw?
 .DS_Store
 coverage
-rtf.gemspec.orig
-*.gemspec
 pkg
 VERSION.yml
+clbustos-rtf.gemspec

@@ -5,7 +5,6 @@ require 'rake'
 require 'rubygems'
 require 'hoe'
 require 'rtf'
-
 Hoe.plugin :git
 
 

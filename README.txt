@@ -10,6 +10,7 @@
  * [TODO] Write comprehensive tests for OL and UL
  * [TODO] Clean up the API
  * [TODO] DRY the code
+ * [TODO] Add an HTML-to-RTF converter
 
 Please, please, please: if you come along this library and would lend me an
 hand to complete tests, please help. Thank you!

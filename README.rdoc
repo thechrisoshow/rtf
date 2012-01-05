@@ -47,7 +47,6 @@ the code.
 
 * Check into RTF image handling with a view to adding support for the insertion
   of images into a Document.
-
 * Provide a complete implementation for the headers and footers.
 
 === Some Examples
@@ -178,10 +177,14 @@ directory, so check that out too.
 
 == CONTRIBUTORS
 
+=== Individuals
 * Marcello Barnaba
 * Claudio Bustos
 * Sam Mullen
 * Chris O'Sullivan
+
+===Organizations
+* IFAD
 
 COPYRIGHT
 Copyright (c) 2009-2012 Peter Wood. See LICENSE for details.
