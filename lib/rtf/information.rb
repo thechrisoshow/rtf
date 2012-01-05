@@ -75,11 +75,11 @@ module RTF
          text   = StringIO.new
 
          text << "#{prefix}Information"
-         text << "\n#{prefix}   Title:    #{@title}" if @title != nil
-         text << "\n#{prefix}   Author:   #{@author}" if @author != nil
-         text << "\n#{prefix}   Company:  #{@company}" if @company != nil
-         text << "\n#{prefix}   Comments: #{@comments}" if @comments != nil
-         text << "\n#{prefix}   Created:  #{@created}" if @created != nil
+         text << "\n#{prefix}   Title:    #{@title}"    unless @title.nil?
+         text << "\n#{prefix}   Author:   #{@author}"   unless @author.nil?
+         text << "\n#{prefix}   Company:  #{@company}"  unless @company.nil?
+         text << "\n#{prefix}   Comments: #{@comments}" unless @comments.nil?
+         text << "\n#{prefix}   Created:  #{@created}"  unless @created.nil?
 
          text.string
       end
@@ -94,11 +94,11 @@ module RTF
          text   = StringIO.new
 
          text << "#{prefix}{\\info"
-         text << "\n#{prefix}{\\title #{@title}}" if @title != nil
-         text << "\n#{prefix}{\\author #{@author}}" if @author != nil
-         text << "\n#{prefix}{\\company #{@company}}" if @company != nil
-         text << "\n#{prefix}{\\doccomm #{@comments}}" if @comments != nil
-         if @created != nil
+         text << "\n#{prefix}{\\title #{@title}}"       unless @title.nil?
+         text << "\n#{prefix}{\\author #{@author}}"     unless @author.nil?
+         text << "\n#{prefix}{\\company #{@company}}"   unless @company.nil?
+         text << "\n#{prefix}{\\doccomm #{@comments}}"  unless @comments.nil?
+         unless @created.nil?
             text << "\n#{prefix}{\\createim\\yr#{@created.year}"
             text << "\\mo#{@created.month}\\dy#{@created.day}"
             text << "\\hr#{@created.hour}\\min#{@created.min}}"

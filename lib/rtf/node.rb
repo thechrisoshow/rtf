@@ -22,7 +22,7 @@ module RTF
       # if the Node has no previous peer.
       def previous_node
          peer = nil
-         if parent != nil and parent.respond_to?(:children)
+         if !parent.nil? and parent.respond_to?(:children)
             index = parent.children.index(self)
             peer  = index > 0 ? parent.children[index - 1] : nil
          end
@@ -33,7 +33,7 @@ module RTF
       # if the Node has no previous peer.
       def next_node
          peer = nil
-         if parent != nil and parent.respond_to?(:children)
+         if !parent.nil? and parent.respond_to?(:children)
             index = parent.children.index(self)
             peer  = parent.children[index + 1]
          end
@@ -44,13 +44,13 @@ module RTF
       # root or base element. The method returns true if the Nodes parent is
       # nil, false otherwise.
       def is_root?
-         @parent == nil
+         @parent.nil?
       end
 
       # This method traverses a Node tree to locate the root element.
       def root
          node = self
-         node = node.parent while node.parent != nil
+         node = node.parent while !node.parent.nil?
          node
       end
    end # End of the Node class.
@@ -74,7 +74,7 @@ module RTF
       #             the method.
       def initialize(parent, text=nil)
          super(parent)
-         if parent == nil
+         if parent.nil?
             RTFError.fire("Nil parent specified for text node.")
          end
          @parent = parent
@@ -87,11 +87,7 @@ module RTF
       # ==== Parameters
       # text::  The String to be added to the end of the text node.
       def append(text)
-         if @text != nil
-            @text = @text + text.to_s
-         else
-            @text = text.to_s
-         end
+        @text = (@text.nil?) ? text.to_s : @text + text.to_s
       end
 
       # This method inserts a String into the existing text within a TextNode
@@ -104,7 +100,7 @@ module RTF
       # offset::  The numbers of characters from the first character to insert
       #           the new text at.
       def insert(text, offset)
-         if @text != nil
+         if !@text.nil?
             @text = @text[0, offset] + text.to_s + @text[offset, @text.length]
          else
             @text = text.to_s
@@ -114,7 +110,7 @@ module RTF
       # This method generates the RTF equivalent for a TextNode object. This
       # method escapes any special sequences that appear in the text.
       def to_rtf
-        rtf=(@text == nil ? '' : @text.gsub("{", "\\{").gsub("}", "\\}").gsub("\\", "\\\\"))
+        rtf=(@text.nil? ? '' : @text.gsub("{", "\\{").gsub("}", "\\}").gsub("\\", "\\\\"))
         # This is from lfarcy / rtf-extensions
         # I don't see the point of coding different 128<n<256 range
 
@@ -159,8 +155,8 @@ module RTF
       # ==== Parameters
       # node::  A reference to the Node object to be added.
       def store(node)
-         if node != nil
-            @children.push(node) if @children.include?(Node) == false
+         if !node.nil?
+            @children.push(node) if !@children.include?(Node)
             node.parent = self if node.parent != self
          end
          node
@@ -252,7 +248,7 @@ module RTF
       # ==== Parameters
       # text::  The String of text to be written to the node.
       def <<(text)
-         if last != nil and last.respond_to?(:text=)
+         if !last.nil? and last.respond_to?(:text=)
             last.append(text)
          else
             self.store(TextNode.new(self, text))
@@ -339,7 +335,7 @@ module RTF
       # ==== Parameters
       # text::  A string containing the text for the footnote.
       def footnote(text)
-         if text != nil && text != ''
+         if !text.nil? and text != ''
             mark = CommandNode.new(self, '\fs16\up6\chftn', nil, false)
             note = CommandNode.new(self, '\footnote {\fs16\up6\chftn}', nil, false)
             note.paragraph << text
@@ -376,15 +372,15 @@ module RTF
       #             the method.
       def apply(style)
          # Check the input style.
-         if style.is_character_style? == false
+         if !style.is_character_style?
             RTFError.fire("Non-character style specified to the "\
                           "CommandNode#apply() method.")
          end
 
          # Store fonts and colours.
-         root.colours << style.foreground if style.foreground != nil
-         root.colours << style.background if style.background != nil
-         root.fonts << style.font if style.font != nil
+         root.colours << style.foreground unless style.foreground.nil?
+         root.colours << style.background unless style.background.nil?
+         root.fonts << style.font unless style.font.nil?
 
          # Generate the command node.
          node = CommandNode.new(self, style.prefix(root.fonts, root.colours))
@@ -936,6 +932,14 @@ module RTF
    class TableCellNode < CommandNode
       # A definition for the default width for the cell.
       DEFAULT_WIDTH                              = 300
+      # Top border
+      TOP = 0
+      # Right border
+      RIGHT = 1
+      # Bottom border
+      BOTTOM = 2
+      # Left border
+      LEFT = 3
       # Width of cell
       attr_accessor :width
       # Attribute accessor.
@@ -961,7 +965,7 @@ module RTF
       def initialize(row, width=DEFAULT_WIDTH, style=nil, top=nil, right=nil,
                      bottom=nil, left=nil)
          super(row, nil)
-         if style != nil && style.is_paragraph_style? == false
+         if !style.nil? and !style.is_paragraph_style?
             RTFError.fire("Non-paragraph style specified for TableCellNode "\
                           "constructor.")
          end
@@ -985,7 +989,7 @@ module RTF
       # ==== Exceptions
       # RTFError::  Generated whenever an invalid style setting is specified.
       def style=(style)
-         if style != nil && style.is_paragraph_style? == false
+         if !style.nil? and !style.is_paragraph_style?
             RTFError.fire("Non-paragraph style specified for TableCellNode "\
                           "constructor.")
          end
@@ -999,9 +1003,9 @@ module RTF
       # ==== Parameters
       # width::  The setting for the width of the border.
       def border_width=(width)
-         size = width == nil ? 0 : width
+         size = width.nil? ? 0 : width
          if size > 0
-            @borders[0] = @borders[1] = @borders[2] = @borders[3] = size.to_i
+            @borders[TOP] = @borders[RIGHT] = @borders[BOTTOM] = @borders[LEFT] = size.to_i
          else
             @borders = [nil, nil, nil, nil]
          end
@@ -1013,11 +1017,11 @@ module RTF
       # ==== Parameters
       # width::  The new border width setting.
       def top_border_width=(width)
-         size = width == nil ? 0 : width
+         size = width.nil? ? 0 : width
          if size > 0
-            @borders[0] = size.to_i
+            @borders[TOP] = size.to_i
          else
-            @borders[0] = nil
+            @borders[TOP] = nil
          end
       end
 
@@ -1027,11 +1031,11 @@ module RTF
       # ==== Parameters
       # width::  The new border width setting.
       def right_border_width=(width)
-         size = width == nil ? 0 : width
+         size = width.nil? ? 0 : width
          if size > 0
-            @borders[1] = size.to_i
+            @borders[RIGHT] = size.to_i
          else
-            @borders[1] = nil
+            @borders[RIGHT] = nil
          end
       end
 
@@ -1041,11 +1045,11 @@ module RTF
       # ==== Parameters
       # width::  The new border width setting.
       def bottom_border_width=(width)
-         size = width == nil ? 0 : width
+         size = width.nil? ? 0 : width
          if size > 0
-            @borders[2] = size.to_i
+            @borders[BOTTOM] = size.to_i
          else
-            @borders[2] = nil
+            @borders[BOTTOM] = nil
          end
       end
 
@@ -1055,11 +1059,11 @@ module RTF
       # ==== Parameters
       # width::  The new border width setting.
       def left_border_width=(width)
-         size = width == nil ? 0 : width
+         size = width.nil? ? 0 : width
          if size > 0
-            @borders[3] = size.to_i
+            @borders[LEFT] = size.to_i
          else
-            @borders[3] = nil
+            @borders[LEFT] = nil
          end
       end
 
@@ -1078,28 +1082,28 @@ module RTF
       # The values are inserted in top, right, bottom, left order.
       def border_widths
          widths = []
-         @borders.each {|entry| widths.push(entry == nil ? 0 : entry)}
+         @borders.each {|entry| widths.push(entry.nil? ? 0 : entry)}
          widths
       end
 
       # This method fetches the width for top border of a cell.
       def top_border_width
-         @borders[0] == nil ? 0 : @borders[0]
+         @borders[TOP].nil? ? 0 : @borders[TOP]
       end
 
       # This method fetches the width for right border of a cell.
       def right_border_width
-         @borders[1] == nil ? 0 : @borders[1]
+         @borders[RIGHT].nil? ? 0 : @borders[RIGHT]
       end
 
       # This method fetches the width for bottom border of a cell.
       def bottom_border_width
-         @borders[2] == nil ? 0 : @borders[2]
+         @borders[BOTTOM].nil? ? 0 : @borders[BOTTOM]
       end
 
       # This method fetches the width for left border of a cell.
       def left_border_width
-         @borders[3] == nil ? 0 : @borders[3]
+         @borders[LEFT].nil? ? 0 : @borders[LEFT]
       end
 
       # This method overloads the paragraph method inherited from the
@@ -1445,7 +1449,7 @@ module RTF
          if block_given?
             done = false
 
-            while done == false && file.eof? == false
+            while !done and !file.eof?
               read << file.getbyte
                done = yield read[-1]
             end
@@ -1453,7 +1457,7 @@ module RTF
             if size != nil
                if size > 0
                   total = 0
-                  while file.eof? == false && total < size
+                  while !file.eof? and total < size
                      read << file.getbyte
                      total += 1
                   end
@@ -1477,7 +1481,7 @@ module RTF
            if @type == JPEG
               # Read until we can't anymore or we've found what we're looking for.
               done = false
-              while file.eof? == false && done == false
+              while !file.eof? and !done
                  # Read to the next marker.
                  read_source(file,read) {|c| c == 0xff} # Read to the marker.
                  read_source(file,read) {|c| c != 0xff} # Skip any padding.
@@ -1829,29 +1833,29 @@ module RTF
 
          text << "{#{prefix}\\#{@character_set.id2name}"
          text << "\\deff#{@default_font}"
-         text << "\\deflang#{@language}" if @language != nil
+         text << "\\deflang#{@language}" if !@language.nil?
          text << "\\plain\\fs24\\fet1"
          text << "\n#{@fonts.to_rtf}"
          text << "\n#{@colours.to_rtf}" if @colours.size > 0
          text << "\n#{@information.to_rtf}"
          text << "\n#{@lists.to_rtf}"
          if @headers.compact != []
-            text << "\n#{@headers[3].to_rtf}" if @headers[3] != nil
-            text << "\n#{@headers[2].to_rtf}" if @headers[2] != nil
-            text << "\n#{@headers[1].to_rtf}" if @headers[1] != nil
-            if @headers[1] == nil or @headers[2] == nil
+            text << "\n#{@headers[3].to_rtf}" if !@headers[3].nil?
+            text << "\n#{@headers[2].to_rtf}" if !@headers[2].nil?
+            text << "\n#{@headers[1].to_rtf}" if !@headers[1].nil?
+            if @headers[1].nil? or @headers[2].nil?
                text << "\n#{@headers[0].to_rtf}"
             end
          end
          if @footers.compact != []
-            text << "\n#{@footers[3].to_rtf}" if @footers[3] != nil
-            text << "\n#{@footers[2].to_rtf}" if @footers[2] != nil
-            text << "\n#{@footers[1].to_rtf}" if @footers[1] != nil
-            if @footers[1] == nil or @footers[2] == nil
+            text << "\n#{@footers[3].to_rtf}" if !@footers[3].nil?
+            text << "\n#{@footers[2].to_rtf}" if !@footers[2].nil?
+            text << "\n#{@footers[1].to_rtf}" if !@footers[1].nil?
+            if @footers[1].nil? or @footers[2].nil?
                text << "\n#{@footers[0].to_rtf}"
             end
          end
-         text << "\n#{@style.prefix(self)}" if @style != nil
+         text << "\n#{@style.prefix(self)}" if !@style.nil?
          self.each {|entry| text << "\n#{entry.to_rtf}"}
          text << "\n}"
 
