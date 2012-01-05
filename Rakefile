@@ -12,7 +12,7 @@ h=Hoe.spec 'clbustos-rtf' do
   # Original author: Peter Wood
   self.developer 'Claudio Bustos', 'clbustos_at_gmail.com'
   self.version=RTF::VERSION
-  
+  self.git_log_author=true
   path = File.expand_path("~/.rubyforge/user-config.yml")
   config = YAML.load(File.read(path))
   host = "#{config["username"]}@rubyforge.org"
