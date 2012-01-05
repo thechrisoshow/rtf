@@ -19,6 +19,7 @@ class TableNodeTest < Test::Unit::TestCase
       assert(table.columns == 5)
       assert(table.size == 3)
       assert(table.cell_margin == 100)
+      assert_match(/\\lastrow\n\\row$/, table.to_rtf)
    end
 
    def test_mutators

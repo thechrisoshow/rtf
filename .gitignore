@@ -10,3 +10,4 @@ coverage
 rtf.gemspec.orig
 *.gemspec
 pkg
+VERSION.yml

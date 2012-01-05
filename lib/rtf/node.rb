@@ -115,12 +115,12 @@ module RTF
       # method escapes any special sequences that appear in the text.
       def to_rtf
         rtf=(@text == nil ? '' : @text.gsub("{", "\\{").gsub("}", "\\}").gsub("\\", "\\\\"))
-        # This is from lfarcy / rtf-extensions 
+        # This is from lfarcy / rtf-extensions
         # I don't see the point of coding different 128<n<256 range
-        
+
         #f1=lambda { |n| n < 128 ? n.chr : n < 256 ? "\\'#{n.to_s(16)}" : "\\u#{n}\\'3f" }
         # Encode as Unicode.
-        
+
         f=lambda { |n| n < 128 ? n.chr : "\\u#{n}\\'3f" }
         # Ruby 1.9 is safe, cause detect original encoding
         # and convert text to utf-16 first
@@ -708,7 +708,7 @@ module RTF
    class TableNode < ContainerNode
       # Cell margin. Default to 100
       attr_accessor :cell_margin
-      
+
       # This is a constructor for the TableNode class.
       #
       # ==== Parameters
@@ -727,7 +727,7 @@ module RTF
             rows.times {entries.push(TableRowNode.new(self, columns, *widths))}
             entries
          end
-        
+
         elsif block
           block.arity<1 ? self.instance_eval(&block) : block.call(self)
         else
@@ -829,7 +829,7 @@ module RTF
             text << row.to_rtf
          end
 
-         text.string
+         text.string.sub(/\\row(?!.*\\row)/m, "\\lastrow\n\\row")
       end
 
       alias :column_shading_color :column_shading_colour
@@ -940,7 +940,7 @@ module RTF
       attr_accessor :width
       # Attribute accessor.
       attr_reader :shading_colour, :style
-      
+
       # This is the constructor for the TableCellNode class.
       #
       # ==== Parameters
@@ -1438,7 +1438,7 @@ module RTF
                if size > 0
                   total = 0
                   while @source.eof? == false && total < size
-					  
+
                      @read << @source.getbyte
                      total += 1
                   end
