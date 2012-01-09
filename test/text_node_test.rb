@@ -55,21 +55,9 @@ class TextNodeTest < Test::Unit::TestCase
 
      nodes[0].text="ASCCI"
      assert_equal("ASCCI", nodes[0].to_rtf)
-<<<<<<< HEAD
-     
-     
-=======
-
-
->>>>>>> 1f91b59bae2b26554f7d1d8e8b1b20d9add52b3d
      utf8="Á"
      exp="\\u#{utf8.unpack("U")[0]}\\'3f"
      nodes[0].text=utf8
      assert_equal(exp, nodes[0].to_rtf)
-<<<<<<< HEAD
-     
-=======
-
->>>>>>> 1f91b59bae2b26554f7d1d8e8b1b20d9add52b3d
    end
 end
