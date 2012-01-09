@@ -1,4 +1,4 @@
-require 'test_helper'
+require File.expand_path(File.dirname(__FILE__)+'/helper_tests')
 
 # Information class unit test class.
 class StyleTest < Test::Unit::TestCase

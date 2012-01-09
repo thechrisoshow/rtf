@@ -1,4 +1,4 @@
-require 'test_helper'
+require File.expand_path(File.dirname(__FILE__)+'/helper_tests')
 
 # Information class unit test class.
 class ContainerNodeTest < Test::Unit::TestCase
@@ -59,6 +59,7 @@ class ContainerNodeTest < Test::Unit::TestCase
          ContainerNode.new(nil).to_rtf
          flunk("Successfully called ContainerNode#to_rtf().")
       rescue => error
+         #puts error
       end
    end
 end

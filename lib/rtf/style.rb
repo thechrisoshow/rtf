@@ -168,14 +168,14 @@ module RTF
       # base::  A reference to base object that the new style will inherit its
       #         initial properties from. Defaults to nil.
       def initialize(base=nil)
-         @justification     = base == nil ? LEFT_JUSTIFY : base.justification
-         @left_indent       = base == nil ? nil : base.left_indent
-         @right_indent      = base == nil ? nil : base.right_indent
-         @first_line_indent = base == nil ? nil : base.first_line_indent
-         @space_before      = base == nil ? nil : base.space_before
-         @space_after       = base == nil ? nil : base.space_after
-         @line_spacing      = base == nil ? nil : base.line_spacing
-         @flow              = base == nil ? LEFT_TO_RIGHT : base.flow
+         @justification     = base.nil? ? LEFT_JUSTIFY : base.justification
+         @left_indent       = base.nil? ? nil : base.left_indent
+         @right_indent      = base.nil? ? nil : base.right_indent
+         @first_line_indent = base.nil? ? nil : base.first_line_indent
+         @space_before      = base.nil? ? nil : base.space_before
+         @space_after       = base.nil? ? nil : base.space_after
+         @line_spacing      = base.nil? ? nil : base.line_spacing
+         @flow              = base.nil? ? LEFT_TO_RIGHT : base.flow
       end
 
       # This method overrides the is_paragraph_style? method inherited from the
@@ -196,12 +196,12 @@ module RTF
          text = StringIO.new
 
          text << "\\#{@justification.id2name}"
-         text << "\\li#{@left_indent}" if @left_indent != nil
-         text << "\\ri#{@right_indent}" if @right_indent != nil
-         text << "\\fi#{@first_line_indent}" if @first_line_indent != nil
-         text << "\\sb#{@space_before}" if @space_before != nil
-         text << "\\sa#{@space_after}" if @space_after != nil
-         text << "\\sl#{@line_spacing}" if @line_spacing != nil
+         text << "\\li#{@left_indent}"        unless @left_indent.nil?
+         text << "\\ri#{@right_indent}"       unless @right_indent.nil?
+         text << "\\fi#{@first_line_indent}"  unless @first_line_indent.nil?
+         text << "\\sb#{@space_before}"       unless @space_before.nil?
+         text << "\\sa#{@space_after}"        unless @space_after.nil?
+         text << "\\sl#{@line_spacing}"       unless @line_spacing.nil?
          text << '\rtlpar' if @flow == RIGHT_TO_LEFT
 
          text.string.length > 0 ? text.string : nil
@@ -266,17 +266,17 @@ module RTF
          text = StringIO.new
 
          if orientation == LANDSCAPE
-            text << "\\paperw#{@paper.height}" if @paper != nil
-            text << "\\paperh#{@paper.width}" if @paper != nil
+            text << "\\paperw#{@paper.height}"  unless @paper.nil?
+            text << "\\paperh#{@paper.width}"   unless @paper.nil?
          else
-            text << "\\paperw#{@paper.width}" if @paper != nil
-            text << "\\paperh#{@paper.height}" if @paper != nil
+            text << "\\paperw#{@paper.width}"   unless @paper.nil?
+            text << "\\paperh#{@paper.height}"  unless @paper.nil?
          end
-         text << "\\margl#{@left_margin}" if @left_margin != nil
-         text << "\\margr#{@right_margin}" if @right_margin != nil
-         text << "\\margt#{@top_margin}" if @top_margin != nil
-         text << "\\margb#{@bottom_margin}" if @bottom_margin != nil
-         text << "\\gutter#{@gutter}" if @gutter != nil
+         text << "\\margl#{@left_margin}"       unless @left_margin.nil?
+         text << "\\margr#{@right_margin}"      unless @right_margin.nil?
+         text << "\\margt#{@top_margin}"        unless @top_margin.nil?
+         text << "\\margb#{@bottom_margin}"     unless @bottom_margin.nil?
+         text << "\\gutter#{@gutter}"           unless @gutter.nil?
          text << '\sectd\lndscpsxn' if @orientation == LANDSCAPE
 
          text.string

@@ -1,4 +1,22 @@
-== Ruby Rich Text Format (RTF) Library
+= rtf
+
+* https://github.com/clbustos/rtf
+
+== Purpose of this fork
+
+ * [DONE] Add support for ordered and unordered lists
+ * [DONE] Add support for hyperlinks
+ * [DONE] Support for UTF8 text
+ * [TODO] Write comprehensive tests for OL and UL
+ * [TODO] Clean up the API
+ * [TODO] DRY the code
+ * [TODO] Add an HTML-to-RTF converter
+
+Please, please, please: if you come along this library and would lend me an
+hand to complete tests, please help. Thank you!
+
+== DESCRIPTION:
+
 The RTF library provides a pure Ruby set of functionality that can be used to
 programmatically create RTF documents. The main aim in developing this library
 is to ease the complexity involved in assembling RTF documents although some
@@ -18,7 +36,8 @@ In creating this library I set out to make it reasonably easy to create RTF
 documents in code. Having said that I'm certain that it is possible to generate
 invalid RTF documents with this library.
 
-=== Known Issues
+=== FEATURES/PROBLEMS:
+
 I've tried to assemble a reasonably extensive (although I won't claim
 exhaustive) unit test for the library. Despite that, this is an early release of
 the code and I'm sure there will be issues with it given the complexity inherent
@@ -40,13 +59,14 @@ in RTF. The following are issues that I'm already aware of with the library...
   implementation. Still, I think I should mention the point that I don't get
   consistent appearance across all of the RTF viewers I've tried.
 
-=== To Do
+=== To do
 This section details that areas where I feel the library is currently lacking
 or incomplete. I hope to address the things detailed here in later releases of
 the code.
 
 * Check into RTF image handling with a view to adding support for the insertion
   of images into a Document.
+
 * Provide a complete implementation for the headers and footers.
 
 === Some Examples
@@ -90,74 +110,69 @@ some code into the document. We want the code to appear in the document slightly
 indented on the left hand side, in a non-proportionately space font and we want
 it in bold text. Heres the code that shows how to do that...
 
-   01 styles = {}
-   02 styles['PS_CODE'] = ParagraphStyle.new
-   03 styles['CS_CODE'] = CharacterStyle.new
-   04
-   05 styles['PS_CODE'].left_indent = 200
-   06 styles['CS_CODE'].font        = Font.new(Font::MODERN, 'Courier')
-   07 styles['CS_CODE'].bold        = true
-   08
-   09 document.paragraph(styles['PS_CODE']) do |n1|
-   10    n1.apply(styles['CS_CODE']) do |n2|
-   11       n2 << "count = 0"
-   12       n2.line_break
-   13       n2 << "File.open('file.txt', 'r') do |file|"
-   14       n2.line_break
-   15       n2 << "   file.each_line {|line| count += 1}"
-   16       n2.line_break
-   17       n2 << "end"
-   18       n2.line_break
-   19       n2 << "puts \"File contains \#{count} lines.\""
-   20    end
-   21 end
+   01 code_para = ParagraphStyle.new
+   02 code_para.left_indent = 200
+   03
+   04 code_char = CharacterStyle.new
+   05 code_char.font = RTF::Font::MODERN
+   06 code_char.bold = true
+   07
+   08 document.paragraph(code_para) do |p|
+   09   p.apply(code_char) do |c|
+   10     c << "count = 0"
+   11     c.line_break
+   12     c << "File.open('file.txt', 'r') do |file|"
+   13     c.line_break
+   14     c << "   file.each_line {|line| count += 1}"
+   15     c.line_break
+   16     c << "end"
+   17     c.line_break
+   18     c << "puts \"File contains \#{count} lines.\""
+   19   end
+   20 end
 
 This is a much larger piece of code and covers a number of topics that need to
 be addressed. I have included line numbers with code so that individual elements
-can be referenced. Lines 1 to 3 are the first new elements. Here we create a
-Hash and assign it to a variable called styles. On the next two lines we create
+can be referenced. Lines 1 to 6 are the first new elements. Here we create
 two style objects, one that can be applied to paragraphs and one that applies
 to characters.
 
-On lines 5 to 7 we update settings on the style objects we've created. We set
-the left indentation value of the paragraph style to 200. The 200 in this case
-refers to a measurement of twips. A twip is a type setting measurement that
-equates to one twentieth of a point (about a fifty seventh of a millimetre or
-one seventy second of an inch). This is the measurement scale used by RTF
-documents so it is also employed in the library.
+On line 2 we set the left indentation value of the paragraph style to 200 *twips*.
+A twip is a type setting measurement that equates to one twentieth of a point
+(about a fifty seventh of a millimetre or one seventy second of an inch). This is
+the measurement scale used by RTF documents.
 
-On lines 6 and 7 we update the character style to use a courier font and to
-apply bold styling to the text. On line 9 we start a new paragraph in our
-document. This differs from our previous use of this method in that we specify
-a style that will be applied to the paragraph created, the paragraph style we
-had prepared earlier.
+On lines 5 and 6 we update the character style to use a courier font and to
+apply bold styling to the text.
+
+On line 8 we start a new paragraph in our document. This differs from our previous
+use of this method in that we specify a style that will be applied to the paragraph
+using the one we prepared earlier.
 
 The block accompanying the paragraph method takes the single parameter that we
 have seen previously. At this point its probably a good idea to point out that
 the elements that make up an RTF document created with the library are all
-stored as nodes in a tree. We've named the one passed to the paragraph method as
-n1 to reflect this.
+stored as nodes in a tree.
 
-Within the block we've called a method on the paragraph node called apply. This
-method applies a character style and we're using the one we prepared earlier.
+Within the block, the +apply+ method applies a character style, and we're using
+the one we prepared earlier.
+
 Like the call to the paragraph method, the apply method is passed a block. All
-text added to the blocks node (n2 in this case) will have the styling we've
-defined (bold courier font) applied to it.
+text added to the blocks node will have the styling we've defined (bold courier
+font) applied to it.
 
-Note, that within the apply block we could still use the n1 node. Any text we
-added to this would appear in the paragraph but wouldn't be styled and, it
-should be noted, will appear before any text added to n2 (as the n2 node only
-becomes part of the document when the apply block completes).
+Note, that within the apply block we could still use the previous (p) node. Any
+text we added to this would appear in the paragraph but wouldn't be styled and,
+it should be noted, will appear before any text added to c, as the c node only
+becomes part of the document when the apply block completes.
 
-Within the apply method block we add some lines of text to the n2 node. Note
+Within the apply method block we add some lines of text to the c node. Note
 that, as this is all encompassed within the parapgraph block, all the text is
 part of a single paragraph. To get each of the lines of code to appear on a
 line of their own we have used the line_break method which inserts a carriage
 return into the document. Note you should use this method to insert line breaks
 rather than trying to add a string containing "\n". RTF is a text based standard
-and won't treat "\n" as you're expecting. You should note also that we've had to
-escape the '#' in one of the code lines to stop Ruby considering it as an
-interpolated value.
+and won't treat "\n" as you're expecting.
 
 Okay, so we've seen have the basics of creating a document and adding elements
 to that document. How do we get what we've created to a file. Well thats
@@ -165,7 +180,7 @@ actually quite straight forward. As was mentioned previously, RTF is a text
 based standard so you simply generate the RTF and write it to a file. Heres an
 example...
 
-   File.open('my_document.rtf', 'w') {|file| file.write(document.to_rtf)} # existing file by this name will be overwritten
+   File.open('my_document.rtf') {|file| file.write(document.to_rtf)}
 
 There you have it. You've been given a quick overview of the basics of using
 the library. For more information consult the HTML based API documentation that
@@ -175,14 +190,12 @@ directory, so check that out too.
 
 == CONTRIBUTORS
 
-=== Individuals
 * Marcello Barnaba
 * Claudio Bustos
 * Sam Mullen
 * Chris O'Sullivan
 
-===Organizations
-* IFAD
 
-COPYRIGHT
+== COPYRIGHT
+
 Copyright (c) 2009-2012 Peter Wood. See LICENSE for details.

@@ -1,38 +1,26 @@
+$:.unshift(File.expand_path(File.dirname(__FILE__)+"/lib"))
+$:.unshift(File.expand_path(File.dirname(__FILE__)))
 require 'rake'
 
-begin
-  require 'jeweler'
-  Jeweler::Tasks.new do |s|
-    s.name = "rtf"
-    s.summary = 'Ruby library to create rich text format documents.'
-    s.email = "paw220470@yahoo.ie"
-    s.homepage = "http://github.com/thechrisoshow/rtf"
-    s.description = 'Ruby RTF is a library that can be used to create '\
-                    'rich text format (RTF) documents. RTF is a text '\
-                    'based standard for laying out document content.'
-    s.authors = ["Peter Wood"]
-    s.files = FileList["[A-Z]*", "{examples,lib,test}/**/*"]
-  end
-rescue LoadError
-  puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
-end
+require 'rubygems'
+require 'hoe'
+require 'rtf'
+Hoe.plugin :git
 
-require 'rake/rdoctask'
-Rake::RDocTask.new do |rdoc|
-  rdoc.rdoc_dir = 'rdoc'
-  rdoc.title = 'ruby-rtf'
-  rdoc.options << '--line-numbers' << '--inline-source'
-  rdoc.rdoc_files.include('[A-Z]*')
-  rdoc.rdoc_files.include('lib/**/*.rb')
-end
 
-require 'rake/testtask'
-Rake::TestTask.new(:test) do |t|
-  t.libs << 'lib' << 'test'
-  t.pattern = 'test/**/*_test.rb'
-  t.verbose = false
+h=Hoe.spec 'clbustos-rtf' do
+  # Original author: Peter Wood
+  self.developer 'Claudio Bustos', 'clbustos_at_gmail.com'
+  self.version=RTF::VERSION
+  self.git_log_author=true
+  path = File.expand_path("~/.rubyforge/user-config.yml")
+  config = YAML.load(File.read(path))
+  host = "#{config["username"]}@rubyforge.org"
+  
+  remote_dir = "#{host}:/var/www/gforge-projects/ruby-statsample/rtf"
+  self.rdoc_locations << remote_dir
+  self.extra_dev_deps << ["hoe",">=0"] 
 end
-
 begin
   require 'rcov/rcovtask'
   Rcov::RcovTask.new do |t|
@@ -43,5 +31,3 @@ begin
 rescue LoadError
   puts "RCov is not available. In order to run rcov, you must: sudo gem install rcov"
 end
-
-task :default => :test

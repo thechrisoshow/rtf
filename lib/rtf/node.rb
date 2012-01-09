@@ -6,14 +6,10 @@ module RTF
    # This class represents an element within an RTF document. The class provides
    # a base class for more specific node types.
    class Node
-      # Attribute accessor.
-      attr_reader :parent
-
-      # Attribute mutator.
-      attr_writer :parent
-
-
-      # This is the constructor for the Node class.
+      # Node parent.
+      attr_accessor :parent
+      
+      # Constructor for the Node class.
       #
       # ==== Parameters
       # parent::  A reference to the Node that owns the new Node. May be nil
@@ -26,7 +22,7 @@ module RTF
       # if the Node has no previous peer.
       def previous_node
          peer = nil
-         if parent != nil and parent.respond_to?(:children)
+         if !parent.nil? and parent.respond_to?(:children)
             index = parent.children.index(self)
             peer  = index > 0 ? parent.children[index - 1] : nil
          end
@@ -37,7 +33,7 @@ module RTF
       # if the Node has no previous peer.
       def next_node
          peer = nil
-         if parent != nil and parent.respond_to?(:children)
+         if !parent.nil? and parent.respond_to?(:children)
             index = parent.children.index(self)
             peer  = parent.children[index + 1]
          end
@@ -48,13 +44,13 @@ module RTF
       # root or base element. The method returns true if the Nodes parent is
       # nil, false otherwise.
       def is_root?
-         @parent == nil
+         @parent.nil?
       end
 
       # This method traverses a Node tree to locate the root element.
       def root
          node = self
-         node = node.parent while node.parent != nil
+         node = node.parent while !node.parent.nil?
          node
       end
    end # End of the Node class.
@@ -78,7 +74,7 @@ module RTF
       #             the method.
       def initialize(parent, text=nil)
          super(parent)
-         if parent == nil
+         if parent.nil?
             RTFError.fire("Nil parent specified for text node.")
          end
          @parent = parent
@@ -91,11 +87,7 @@ module RTF
       # ==== Parameters
       # text::  The String to be added to the end of the text node.
       def append(text)
-         if @text != nil
-            @text = @text + text.to_s
-         else
-            @text = text.to_s
-         end
+        @text = (@text.nil?) ? text.to_s : @text + text.to_s
       end
 
       # This method inserts a String into the existing text within a TextNode
@@ -108,7 +100,7 @@ module RTF
       # offset::  The numbers of characters from the first character to insert
       #           the new text at.
       def insert(text, offset)
-         if @text != nil
+         if !@text.nil?
             @text = @text[0, offset] + text.to_s + @text[offset, @text.length]
          else
             @text = text.to_s
@@ -118,7 +110,7 @@ module RTF
       # This method generates the RTF equivalent for a TextNode object. This
       # method escapes any special sequences that appear in the text.
       def to_rtf
-        rtf=(@text == nil ? '' : @text.gsub("{", "\\{").gsub("}", "\\}").gsub("\\", "\\\\"))
+        rtf=(@text.nil? ? '' : @text.gsub("{", "\\{").gsub("}", "\\}").gsub("\\", "\\\\"))
         # This is from lfarcy / rtf-extensions
         # I don't see the point of coding different 128<n<256 range
 
@@ -163,8 +155,8 @@ module RTF
       # ==== Parameters
       # node::  A reference to the Node object to be added.
       def store(node)
-         if node != nil
-            @children.push(node) if @children.include?(Node) == false
+         if !node.nil?
+            @children.push(node) if !@children.include?(Node)
             node.parent = self if node.parent != self
          end
          node
@@ -225,6 +217,9 @@ module RTF
       # be written to separate lines whether the node is converted
       # to RTF. Defaults to true
       attr_accessor :split
+      # A boolean to indicate whether the prefix and suffix should
+      # be wrapped in curly braces. Defaults to true.
+      attr_accessor :wrap
 
       # This is the constructor for the CommandNode class.
       #
@@ -236,11 +231,14 @@ module RTF
       # split::   A boolean to indicate whether the prefix and suffix should
       #           be written to separate lines whether the node is converted
       #           to RTF. Defaults to true.
-      def initialize(parent, prefix, suffix=nil, split=true)
+      # wrap::    A boolean to indicate whether the prefix and suffix should
+      #           be wrapped in curly braces. Defaults to true.
+      def initialize(parent, prefix, suffix=nil, split=true, wrap=true)
          super(parent)
          @prefix = prefix
          @suffix = suffix
          @split  = split
+         @wrap   = wrap
       end
 
       # This method adds text to a command node. If the last child node of the
@@ -250,7 +248,7 @@ module RTF
       # ==== Parameters
       # text::  The String of text to be written to the node.
       def <<(text)
-         if last != nil and last.respond_to?(:text=)
+         if !last.nil? and last.respond_to?(:text=)
             last.append(text)
          else
             self.store(TextNode.new(self, text))
@@ -259,19 +257,20 @@ module RTF
 
       # This method generates the RTF text for a CommandNode object.
       def to_rtf
-         text      = StringIO.new
-         separator = split? ? "\n" : " "
-         line      = (separator == " ")
+         text = StringIO.new
 
-         text << "{#{@prefix}"
-         text << separator if self.size > 0
+         text << '{'       if wrap?
+         text << @prefix   if @prefix
+
          self.each do |entry|
-            text << "\n" if line
-            line = true
-            text << "#{entry.to_rtf}"
+            text << "\n" if split?
+            text << entry.to_rtf
          end
-         text << "\n" if split?
-         text << "#{@suffix}}"
+
+         text << "\n"    if split?
+         text << @suffix if @suffix
+         text << '}'     if wrap?
+
          text.string
       end
 
@@ -286,14 +285,41 @@ module RTF
       #          for the new paragraph. Defaults to nil to indicate that the
       #          currently applied paragraph styling should be used.
       def paragraph(style=nil)
-         # Create the node prefix.
-         text = StringIO.new
-         text << '\pard'
-         text << style.prefix(nil, nil) if style != nil
-
-         node = CommandNode.new(self, text.string, '\par')
+         node = ParagraphNode.new(self, style)
          yield node if block_given?
          self.store(node)
+      end
+
+      # This method provides a short cut means of creating a new ordered or
+      # unordered list. The method requires a block that will be passed a
+      # single parameter that'll be a reference to the first level of the
+      # list. See the +ListLevelNode+ doc for more information.
+      #
+      # Example usage:
+      #
+      #   rtf.list do |level1|
+      #     level1.item do |li|
+      #       li << 'some text'
+      #       li.apply(some_style) {|x| x << 'some styled text'}
+      #     end
+      #
+      #     level1.list(:decimal) do |level2|
+      #       level2.item {|li| li << 'some other text in a decimal list'}
+      #       level2.item {|li| li << 'and here we go'}
+      #     end
+      #   end
+      #
+      def list(kind=:bullets)
+        node = ListNode.new(self)
+        yield node.list(kind)
+        self.store(node)
+      end
+
+      def link(url, text=nil)
+        node = LinkNode.new(self, url)
+        node << text if text
+        yield node   if block_given?
+        self.store(node)
       end
 
       # This method provides a short cut means of creating a line break command
@@ -309,7 +335,7 @@ module RTF
       # ==== Parameters
       # text::  A string containing the text for the footnote.
       def footnote(text)
-         if text != nil && text != ''
+         if !text.nil? and text != ''
             mark = CommandNode.new(self, '\fs16\up6\chftn', nil, false)
             note = CommandNode.new(self, '\footnote {\fs16\up6\chftn}', nil, false)
             note.paragraph << text
@@ -346,15 +372,15 @@ module RTF
       #             the method.
       def apply(style)
          # Check the input style.
-         if style.is_character_style? == false
+         if !style.is_character_style?
             RTFError.fire("Non-character style specified to the "\
                           "CommandNode#apply() method.")
          end
 
          # Store fonts and colours.
-         root.colours << style.foreground if style.foreground != nil
-         root.colours << style.background if style.background != nil
-         root.fonts << style.font if style.font != nil
+         root.colours << style.foreground unless style.foreground.nil?
+         root.colours << style.background unless style.background.nil?
+         root.fonts << style.font unless style.font.nil?
 
          # Generate the command node.
          node = CommandNode.new(self, style.prefix(root.fonts, root.colours))
@@ -407,6 +433,21 @@ module RTF
          end
       end
 
+      # This method provides a short cut means of creating a subscript command
+      # node. The method accepts a block that will be passed a single parameter
+      # which will be a reference to the subscript node created. After the
+      # block is complete the subscript node is appended to the end of the
+      # child nodes on the object that the method is call against.
+      def subscript
+         style           = CharacterStyle.new
+         style.subscript = true
+         if block_given?
+            apply(style) {|node| yield node}
+         else
+            apply(style)
+         end
+      end
+
       # This method provides a short cut means of creating a superscript command
       # node. The method accepts a block that will be passed a single parameter
       # which will be a reference to the superscript node created. After the
@@ -415,6 +456,21 @@ module RTF
       def superscript
          style             = CharacterStyle.new
          style.superscript = true
+         if block_given?
+            apply(style) {|node| yield node}
+         else
+            apply(style)
+         end
+      end
+
+      # This method provides a short cut means of creating a strike command
+      # node. The method accepts a block that will be passed a single parameter
+      # which will be a reference to the strike node created. After the
+      # block is complete the strike node is appended to the end of the
+      # child nodes on the object that the method is call against.
+      def strike
+         style        = CharacterStyle.new
+         style.strike = true
          if block_given?
             apply(style) {|node| yield node}
          else
@@ -524,11 +580,123 @@ module RTF
          node
       end
 
-      alias :write :<<
-      alias :color :colour
+      alias :write  :<<
+      alias :color  :colour
       alias :split? :split
+      alias :wrap?  :wrap
    end # End of the CommandNode class.
 
+   # This class represents a paragraph within an RTF document.
+   class ParagraphNode < CommandNode
+     def initialize(parent, style=nil)
+       prefix = '\pard'
+       prefix << style.prefix(nil, nil) if style
+
+       super(parent, prefix, '\par')
+     end
+   end
+
+   # This class represents an ordered/unordered list within an RTF document.
+   #
+   # Currently list nodes can contain any type of node, but this behaviour
+   # will change in future releases. The class overrides the +list+ method
+   # to return a +ListLevelNode+.
+   #
+   class ListNode < CommandNode
+     def initialize(parent)
+       prefix  = "\\"
+
+       suffix  = '\pard'
+       suffix << ListLevel::ResetTabs.map {|tw| "\\tx#{tw}"}.join
+       suffix << '\ql\qlnatural\pardirnatural\cf0 \\'
+
+       super(parent, prefix, suffix, true, false)
+
+       @template = root.lists.new_template
+     end
+
+     # This method creates a new +ListLevelNode+ of the given kind and
+     # stores it in the document tree.
+     #
+     # ==== Parameters
+     # kind::  The kind of this list level, may be either :bullets or :decimal
+     def list(kind)
+       self.store ListLevelNode.new(self, @template, kind)
+     end
+   end
+
+   # This class represents a list level, and carries out indenting information
+   # and the bullet or number that is prepended to each +ListTextNode+.
+   #
+   # The class overrides the +list+ method to implement nesting, and provides
+   # the +item+ method to add a new list item, the +ListTextNode+.
+   class ListLevelNode < CommandNode
+     def initialize(parent, template, kind, level=1)
+       @template = template
+       @kind     = kind
+       @level    = template.level_for(level, kind)
+
+       prefix  = '\pard'
+       prefix << @level.tabs.map {|tw| "\\tx#{tw}"}.join
+       prefix << "\\li#{@level.indent}\\fi-#{@level.indent}"
+       prefix << "\\ql\\qlnatural\\pardirnatural\n"
+       prefix << "\\ls#{@template.id}\\ilvl#{@level.level-1}\\cf0"
+
+       super(parent, prefix, nil, true, false)
+     end
+
+     # Returns the kind of this level, either :bullets or :decimal
+     attr_reader :kind
+
+     # Returns the indenting level of this list, from 1 to 9
+     def level
+       @level.level
+     end
+
+     # Creates a new +ListTextNode+ and yields it to the calling block
+     def item
+       node = ListTextNode.new(self, @level)
+       yield node
+       self.store(node)
+     end
+
+     # Creates a new +ListLevelNode+ to implement nested lists
+     def list(kind=@kind)
+       node = ListLevelNode.new(self, @template, kind, @level.level+1)
+       yield node
+       self.store(node)
+     end
+   end
+
+   # This class represents a list item, that can contain text or
+   # other nodes. Currently any type of node is accepted, but after
+   # more extensive testing this behaviour may change.
+   class ListTextNode < CommandNode
+     def initialize(parent, level)
+       @level  = level
+       @parent = parent
+
+       number = siblings_count + 1 if parent.kind == :decimal
+       prefix = "{\\listtext#{@level.marker.text_format(number)}}"
+       suffix = '\\'
+
+       super(parent, prefix, suffix, false, false)
+     end
+
+     private
+       def siblings_count
+         parent.children.select {|n| n.kind_of?(self.class)}.size
+       end
+   end
+
+   class LinkNode < CommandNode
+     def initialize(parent, url)
+       prefix = "\\field{\\*\\fldinst HYPERLINK \"#{url}\"}{\\fldrslt "
+       suffix = "}"
+
+       super(parent, prefix, suffix, false)
+     end
+   end
 
    # This class represents a table node within an RTF document. Table nodes are
    # specialised container nodes that contain only TableRowNodes and have their
@@ -764,6 +932,14 @@ module RTF
    class TableCellNode < CommandNode
       # A definition for the default width for the cell.
       DEFAULT_WIDTH                              = 300
+      # Top border
+      TOP = 0
+      # Right border
+      RIGHT = 1
+      # Bottom border
+      BOTTOM = 2
+      # Left border
+      LEFT = 3
       # Width of cell
       attr_accessor :width
       # Attribute accessor.
@@ -789,7 +965,7 @@ module RTF
       def initialize(row, width=DEFAULT_WIDTH, style=nil, top=nil, right=nil,
                      bottom=nil, left=nil)
          super(row, nil)
-         if style != nil && style.is_paragraph_style? == false
+         if !style.nil? and !style.is_paragraph_style?
             RTFError.fire("Non-paragraph style specified for TableCellNode "\
                           "constructor.")
          end
@@ -813,7 +989,7 @@ module RTF
       # ==== Exceptions
       # RTFError::  Generated whenever an invalid style setting is specified.
       def style=(style)
-         if style != nil && style.is_paragraph_style? == false
+         if !style.nil? and !style.is_paragraph_style?
             RTFError.fire("Non-paragraph style specified for TableCellNode "\
                           "constructor.")
          end
@@ -827,9 +1003,9 @@ module RTF
       # ==== Parameters
       # width::  The setting for the width of the border.
       def border_width=(width)
-         size = width == nil ? 0 : width
+         size = width.nil? ? 0 : width
          if size > 0
-            @borders[0] = @borders[1] = @borders[2] = @borders[3] = size.to_i
+            @borders[TOP] = @borders[RIGHT] = @borders[BOTTOM] = @borders[LEFT] = size.to_i
          else
             @borders = [nil, nil, nil, nil]
          end
@@ -841,11 +1017,11 @@ module RTF
       # ==== Parameters
       # width::  The new border width setting.
       def top_border_width=(width)
-         size = width == nil ? 0 : width
+         size = width.nil? ? 0 : width
          if size > 0
-            @borders[0] = size.to_i
+            @borders[TOP] = size.to_i
          else
-            @borders[0] = nil
+            @borders[TOP] = nil
          end
       end
 
@@ -855,11 +1031,11 @@ module RTF
       # ==== Parameters
       # width::  The new border width setting.
       def right_border_width=(width)
-         size = width == nil ? 0 : width
+         size = width.nil? ? 0 : width
          if size > 0
-            @borders[1] = size.to_i
+            @borders[RIGHT] = size.to_i
          else
-            @borders[1] = nil
+            @borders[RIGHT] = nil
          end
       end
 
@@ -869,11 +1045,11 @@ module RTF
       # ==== Parameters
       # width::  The new border width setting.
       def bottom_border_width=(width)
-         size = width == nil ? 0 : width
+         size = width.nil? ? 0 : width
          if size > 0
-            @borders[2] = size.to_i
+            @borders[BOTTOM] = size.to_i
          else
-            @borders[2] = nil
+            @borders[BOTTOM] = nil
          end
       end
 
@@ -883,11 +1059,11 @@ module RTF
       # ==== Parameters
       # width::  The new border width setting.
       def left_border_width=(width)
-         size = width == nil ? 0 : width
+         size = width.nil? ? 0 : width
          if size > 0
-            @borders[3] = size.to_i
+            @borders[LEFT] = size.to_i
          else
-            @borders[3] = nil
+            @borders[LEFT] = nil
          end
       end
 
@@ -906,47 +1082,36 @@ module RTF
       # The values are inserted in top, right, bottom, left order.
       def border_widths
          widths = []
-         @borders.each {|entry| widths.push(entry == nil ? 0 : entry)}
+         @borders.each {|entry| widths.push(entry.nil? ? 0 : entry)}
          widths
       end
 
       # This method fetches the width for top border of a cell.
       def top_border_width
-         @borders[0] == nil ? 0 : @borders[0]
+         @borders[TOP].nil? ? 0 : @borders[TOP]
       end
 
       # This method fetches the width for right border of a cell.
       def right_border_width
-         @borders[1] == nil ? 0 : @borders[1]
+         @borders[RIGHT].nil? ? 0 : @borders[RIGHT]
       end
 
       # This method fetches the width for bottom border of a cell.
       def bottom_border_width
-         @borders[2] == nil ? 0 : @borders[2]
+         @borders[BOTTOM].nil? ? 0 : @borders[BOTTOM]
       end
 
       # This method fetches the width for left border of a cell.
       def left_border_width
-         @borders[3] == nil ? 0 : @borders[3]
+         @borders[LEFT].nil? ? 0 : @borders[LEFT]
       end
 
       # This method overloads the paragraph method inherited from the
       # ComamndNode class to forbid the creation of paragraphs.
       #
       # ==== Parameters
-      # justification::  The justification to be applied to the paragraph.
-      # before::         The amount of space, in twips, to be inserted before
-      #                  the paragraph. Defaults to nil.
-      # after::          The amount of space, in twips, to be inserted after
-      #                  the paragraph. Defaults to nil.
-      # left::           The amount of indentation to place on the left of the
-      #                  paragraph. Defaults to nil.
-      # right::          The amount of indentation to place on the right of the
-      #                  paragraph. Defaults to nil.
-      # first::          The amount of indentation to place on the left of the
-      #                  first line in the paragraph. Defaults to nil.
-      def paragraph(justification=CommandNode::LEFT_JUSTIFY, before=nil,
-                    after=nil, left=nil, right=nil, first=nil)
+      # style::  The paragraph style, ignored
+      def paragraph(style=nil)
          RTFError.fire("TableCellNode#paragraph() called. Table cells cannot "\
                        "contain paragraphs.")
       end
@@ -1107,13 +1272,20 @@ module RTF
       # A definition for an architecture endian constant.
       BIG_ENDIAN                                 = :big
 
+      # Offsets for reading dimension data by filetype
+      DIMENSIONS_OFFSET = {
+        JPEG   => 2,
+        PNG    => 8,
+        BITMAP => 8,
+      }.freeze
+
       # Attribute accessor.
       attr_reader :x_scaling, :y_scaling, :top_crop, :right_crop, :bottom_crop,
-                  :left_crop, :width, :height
+                  :left_crop, :width, :height, :displayed_width, :displayed_height
 
       # Attribute mutator.
       attr_writer :x_scaling, :y_scaling, :top_crop, :right_crop, :bottom_crop,
-                  :left_crop
+                  :left_crop, :displayed_width, :displayed_height
 
 
       # This is the constructor for the ImageNode class.
@@ -1133,63 +1305,66 @@ module RTF
          super(parent)
          @source = nil
          @id     = id
-         @read   = []
          @type   = nil
          @x_scaling = @y_scaling = nil
          @top_crop = @right_crop = @bottom_crop = @left_crop = nil
          @width = @height = nil
+         @displayed_width = @displayed_height = nil
 
-         # Check what we were given.
-         src = source
-         src.binmode if src.instance_of?(File)
-         src = File.new(source, 'rb') if source.instance_of?(String)
-         if src.instance_of?(File)
-            # Check the files existence and accessibility.
-            if !File.exist?(src.path)
-               RTFError.fire("Unable to find the #{File.basename(source)} file.")
-            end
-            if !File.readable?(src.path)
-               RTFError.fire("Access to the #{File.basename(source)} file denied.")
-            end
-            @source = src
-         else
-            RTFError.fire("Unrecognised source specified for ImageNode.")
+         # store path to image
+         @source = source if source.instance_of?(String) || source.instance_of?(Tempfile)
+         @source = source.path if source.instance_of?(File)
+
+         # Check the file's existence and accessibility.
+         if !File.exist?(@source)
+            RTFError.fire("Unable to find the #{File.basename(@source)} file.")
+         end
+         if !File.readable?(@source)
+            RTFError.fire("Access to the #{File.basename(@source)} file denied.")
          end
 
-         @type = get_file_type(src)
+         @type = get_file_type
          if @type == nil
-            RTFError.fire("The #{File.basename(source)} file contains an "\
+            RTFError.fire("The #{File.basename(@source)} file contains an "\
                           "unknown or unsupported image type.")
          end
 
          @width, @height = get_dimensions
       end
 
+      def open_file(&block)
+        if block
+          File.open(@source, 'rb', &block)
+        else
+          File.open(@source, 'rb')
+        end
+      end
+
       # This method attempts to determine the image type associated with a
       # file, returning nil if it fails to make the determination.
-      #
-      # ==== Parameters
-      # file::  A reference to the file to check for image type.
-      def get_file_type(file)
+      def get_file_type
          type = nil
+         read = []
+         open_file do |file|
 
-         # Check if the file is a JPEG.
-         read_source(2)
+           # Check if the file is a JPEG.
+           read_source(file, read, 2)
+           if read[0,2] == [255, 216]
+              type = JPEG
+           else
+              # Check if it's a PNG.
+              read_source(file, read, 6)
+              if read[0,8] == [137, 80, 78, 71, 13, 10, 26, 10]
+                 type = PNG
+              else
+                 # Check if its a bitmap.
+                 if read[0,2] == [66, 77]
+                    size = to_integer(read[2,4])
+                    type = BITMAP if size == File.size(@source)
+                 end
+              end
+           end
 
-         if @read[0,2] == [255, 216]
-            type = JPEG
-         else
-            # Check if it's a PNG.
-            read_source(6)
-            if @read[0,8] == [137, 80, 78, 71, 13, 10, 26, 10]
-               type = PNG
-            else
-               # Check if its a bitmap.
-               if @read[0,2] == [66, 77]
-                  size = to_integer(@read[2,4])
-                  type = BITMAP if size == File.size(file.path)
-               end
-            end
          end
 
          type
@@ -1197,32 +1372,38 @@ module RTF
 
       # This method generates the RTF for an ImageNode object.
       def to_rtf
-         text  = StringIO.new
-         count = 0
-
-         #text << '{\pard{\*\shppict{\pict'
-         text << '{\*\shppict{\pict'
-         text << "\\picscalex#{@x_scaling}" if @x_scaling != nil
-         text << "\\picscaley#{@y_scaling}" if @y_scaling != nil
-         text << "\\piccropl#{@left_crop}" if @left_crop != nil
-         text << "\\piccropr#{@right_crop}" if @right_crop != nil
-         text << "\\piccropt#{@top_crop}" if @top_crop != nil
-         text << "\\piccropb#{@bottom_crop}" if @bottom_crop != nil
-         text << "\\picw#{@width}\\pich#{@height}\\bliptag#{@id}"
-         text << "\\#{@type.id2name}\n"
-         @source.each_byte {|byte| @read << byte} if @source.eof? == false
-         @read.each do |byte|
-            text << ("%02x" % byte)
+        text  = StringIO.new
+        count = 0
+  
+        #text << '{\pard{\*\shppict{\pict'
+        text << '{\*\shppict{\pict'
+        text << "\\picscalex#{@x_scaling}" if @x_scaling != nil
+        text << "\\picscaley#{@y_scaling}" if @y_scaling != nil
+        text << "\\piccropl#{@left_crop}" if @left_crop != nil
+        text << "\\piccropr#{@right_crop}" if @right_crop != nil
+        text << "\\piccropt#{@top_crop}" if @top_crop != nil
+        text << "\\piccropb#{@bottom_crop}" if @bottom_crop != nil
+        text << "\\picwgoal#{@displayed_width}" if @displayed_width != nil
+        text << "\\pichgoal#{@displayed_height}" if @displayed_height != nil        
+        text << "\\picw#{@width}\\pich#{@height}\\bliptag#{@id}"
+        text << "\\#{@type.id2name}\n"
+  
+        open_file do |file|
+          file.each_byte do |byte|
+            hex_str = byte.to_s(16)
+            hex_str.insert(0,'0') if hex_str.length == 1
+            text << hex_str    
             count += 1
             if count == 40
-               text << "\n"
-               count = 0
+              text << "\n"
+              count = 0
             end
-         end
-         #text << "\n}}\\par}"
-         text << "\n}}"
+          end
+        end
+        #text << "\n}}\\par}"
+        text << "\n}}"
 
-         text.string
+        text.string
       end
 
       # This method is used to determine the underlying endianness of a
@@ -1264,69 +1445,73 @@ module RTF
       # size::  The maximum number of bytes to be read from the file. Defaults
       #         to nil to indicate that the remainder of the file should be read
       #         in.
-      def read_source(size=nil)
+      def read_source(file, read, size=nil)
          if block_given?
             done = false
 
-            while done == false && @source.eof? == false
-              @read << @source.getbyte
-               done = yield @read[-1]
+            while !done and !file.eof?
+              read << file.getbyte
+               done = yield read[-1]
             end
          else
             if size != nil
                if size > 0
                   total = 0
-                  while @source.eof? == false && total < size
-
-                     @read << @source.getbyte
+                  while !file.eof? and total < size
+                     read << file.getbyte
                      total += 1
                   end
                end
             else
-               @source.each_byte {|byte| @read << byte}
+               file.each_byte {|byte| read << byte}
             end
          end
       end
+
 
       # This method fetches details of the dimensions associated with an image.
       def get_dimensions
          dimensions = nil
 
-         # Check the image type.
-         if @type == JPEG
-            # Read until we can't anymore or we've found what we're looking for.
-            done = false
-            while @source.eof? == false && done == false
-               # Read to the next marker.
-               read_source {|c| c == 0xff} # Read to the marker.
-               read_source {|c| c != 0xff} # Skip any padding.
+         open_file do |file|
+           file.pos = DIMENSIONS_OFFSET[@type]
+           read = []
 
-               if @read[-1] >= 0xc0 && @read[-1] <= 0xc3
-                  # Read in the width and height details.
-                  read_source(7)
-                  dimensions = @read[-4,4].pack('C4').unpack('nn').reverse
-                  done       = true
-               else
-                  # Skip the marker block.
-                  read_source(2)
-                  read_source(@read[-2,2].pack('C2').unpack('n')[0] - 2)
-               end
-            end
-         elsif @type == PNG
-            # Read in the data to contain the width and height.
-            read_source(16)
-            dimensions = @read[-8,8].pack('C8').unpack('N2')
-         elsif @type == BITMAP
-            # Read in the data to contain the width and height.
-            read_source(18)
-            dimensions = [to_integer(@read[-8,4]), to_integer(@read[-4,4])]
+           # Check the image type.
+           if @type == JPEG
+              # Read until we can't anymore or we've found what we're looking for.
+              done = false
+              while !file.eof? and !done
+                 # Read to the next marker.
+                 read_source(file,read) {|c| c == 0xff} # Read to the marker.
+                 read_source(file,read) {|c| c != 0xff} # Skip any padding.
+
+                 if read[-1] >= 0xc0 && read[-1] <= 0xc3
+                    # Read in the width and height details.
+                    read_source(file, read, 7)
+                    dimensions = read[-4,4].pack('C4').unpack('nn').reverse
+                    done       = true
+                 else
+                    # Skip the marker block.
+                    read_source(file, read, 2)
+                    read_source(file, read, read[-2,2].pack('C2').unpack('n')[0] - 2)
+                 end
+              end
+           elsif @type == PNG
+              # Read in the data to contain the width and height.
+              read_source(file, read, 16)
+              dimensions = read[-8,8].pack('C8').unpack('N2')
+           elsif @type == BITMAP
+              # Read in the data to contain the width and height.
+              read_source(file, read, 18)
+              dimensions = [to_integer(read[-8,4]), to_integer(read[-4,4])]
+           end
          end
 
          dimensions
       end
 
-      private :read_source, :get_file_type, :to_integer, :get_endian,
-              :get_dimensions
+      private :get_file_type, :to_integer, :get_endian, :get_dimensions, :open_file
    end # End of the ImageNode class.
 
 
@@ -1479,8 +1664,8 @@ module RTF
       LC_VIETNAMESE                    = 1066
 
       # Attribute accessor.
-      attr_reader :fonts, :colours, :information, :character_set, :language,
-                  :style
+      attr_reader :fonts, :lists, :colours, :information, :character_set,
+                  :language, :style
 
       # Attribute mutator.
       attr_writer :character_set, :language
@@ -1499,6 +1684,7 @@ module RTF
       def initialize(font, style=nil, character=CS_ANSI, language=LC_ENGLISH_UK)
          super(nil, '\rtf1')
          @fonts         = FontTable.new(font)
+         @lists         = ListTable.new
          @default_font  = 0
          @colours       = ColourTable.new
          @information   = Information.new
@@ -1647,28 +1833,29 @@ module RTF
 
          text << "{#{prefix}\\#{@character_set.id2name}"
          text << "\\deff#{@default_font}"
-         text << "\\deflang#{@language}" if @language != nil
+         text << "\\deflang#{@language}" if !@language.nil?
          text << "\\plain\\fs24\\fet1"
          text << "\n#{@fonts.to_rtf}"
          text << "\n#{@colours.to_rtf}" if @colours.size > 0
          text << "\n#{@information.to_rtf}"
+         text << "\n#{@lists.to_rtf}"
          if @headers.compact != []
-            text << "\n#{@headers[3].to_rtf}" if @headers[3] != nil
-            text << "\n#{@headers[2].to_rtf}" if @headers[2] != nil
-            text << "\n#{@headers[1].to_rtf}" if @headers[1] != nil
-            if @headers[1] == nil or @headers[2] == nil
+            text << "\n#{@headers[3].to_rtf}" if !@headers[3].nil?
+            text << "\n#{@headers[2].to_rtf}" if !@headers[2].nil?
+            text << "\n#{@headers[1].to_rtf}" if !@headers[1].nil?
+            if @headers[1].nil? or @headers[2].nil?
                text << "\n#{@headers[0].to_rtf}"
             end
          end
          if @footers.compact != []
-            text << "\n#{@footers[3].to_rtf}" if @footers[3] != nil
-            text << "\n#{@footers[2].to_rtf}" if @footers[2] != nil
-            text << "\n#{@footers[1].to_rtf}" if @footers[1] != nil
-            if @footers[1] == nil or @footers[2] == nil
+            text << "\n#{@footers[3].to_rtf}" if !@footers[3].nil?
+            text << "\n#{@footers[2].to_rtf}" if !@footers[2].nil?
+            text << "\n#{@footers[1].to_rtf}" if !@footers[1].nil?
+            if @footers[1].nil? or @footers[2].nil?
                text << "\n#{@footers[0].to_rtf}"
             end
          end
-         text << "\n#{@style.prefix(self)}" if @style != nil
+         text << "\n#{@style.prefix(self)}" if !@style.nil?
          self.each {|entry| text << "\n#{entry.to_rtf}"}
          text << "\n}"
 
